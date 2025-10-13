@@ -1,5 +1,5 @@
-import { createApp } from './app.js'
-import { config } from './config/env.js'
+import { createApp } from './app'
+import { config } from './config/env'
 
 async function start() {
   try {

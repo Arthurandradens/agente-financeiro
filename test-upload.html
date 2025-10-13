@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Upload</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            cursor: pointer;
+        }
+        .upload-area:hover {
+            border-color: #007bff;
+            background-color: #f8f9fa;
+        }
+        .file-info {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Teste de Upload de Arquivo Excel</h1>
+    
+    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+        <p>Clique aqui para selecionar um arquivo Excel (.xlsx)</p>
+        <p>Ou arraste o arquivo para esta área</p>
+    </div>
+    
+    <input type="file" id="fileInput" accept=".xlsx" style="display: none;">
+    
+    <div id="fileInfo" class="file-info" style="display: none;">
+        <h3>Informações do Arquivo:</h3>
+        <p><strong>Nome:</strong> <span id="fileName"></span></p>
+        <p><strong>Tamanho:</strong> <span id="fileSize"></span></p>
+        <p><strong>Tipo:</strong> <span id="fileType"></span></p>
+    </div>
+    
+    <button onclick="testFileRead()">Testar Leitura do Arquivo</button>
+    <button onclick="clearFile()">Limpar</button>
+    
+    <div id="result" style="margin-top: 20px;"></div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const result = document.getElementById('result');
+        let selectedFile = null;
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                selectedFile = file;
+                showFileInfo(file);
+            }
+        });
+
+        function showFileInfo(file) {
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = (file.size / 1024).toFixed(2) + ' KB';
+            document.getElementById('fileType').textContent = file.type;
+            fileInfo.style.display = 'block';
+        }
+
+        function testFileRead() {
+            if (!selectedFile) {
+                alert('Por favor, selecione um arquivo primeiro.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                result.innerHTML = `
+                    <h3>Resultado do Teste:</h3>
+                    <p><strong>Arquivo carregado com sucesso!</strong></p>
+                    <p><strong>Tamanho dos dados:</strong> ${data.length} bytes</p>
+                    <p><strong>Primeiros 100 bytes:</strong> ${Array.from(data.slice(0, 100)).map(b => b.toString(16).padStart(2, '0')).join(' ')}</p>
+                `;
+            };
+            reader.onerror = function() {
+                result.innerHTML = '<p style="color: red;">Erro ao ler o arquivo.</p>';
+            };
+            reader.readAsArrayBuffer(selectedFile);
+        }
+
+        function clearFile() {
+            selectedFile = null;
+            fileInput.value = '';
+            fileInfo.style.display = 'none';
+            result.innerHTML = '';
+        }
+
+        // Drag and drop
+        const uploadArea = document.querySelector('.upload-area');
+        
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#007bff';
+            uploadArea.style.backgroundColor = '#f8f9fa';
+        });
+
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#ccc';
+            uploadArea.style.backgroundColor = 'white';
+        });
+
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#ccc';
+            uploadArea.style.backgroundColor = 'white';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                selectedFile = files[0];
+                showFileInfo(files[0]);
+            }
+        });
+    </script>
+</body>
+</html>

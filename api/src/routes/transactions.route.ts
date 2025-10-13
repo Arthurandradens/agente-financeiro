@@ -1,15 +1,30 @@
 import { FastifyPluginAsync } from 'fastify'
-import { TransactionsQuerySchema } from '../types/dto.js'
-import { TransactionsService } from '../services/transactions.service.js'
-import { HttpError } from '../utils/errors.js'
+import { TransactionsQuerySchema } from '../types/dto'
+import { TransactionsService } from '../services/transactions.service'
+import { HttpError } from '../utils/errors'
 
 const transactionsRoute: FastifyPluginAsync = async (fastify) => {
   const transactionsService = new TransactionsService(fastify)
 
-  fastify.get('/transactions', {
+  fastify.get('/', {
     config: { requireAuth: true },
     schema: {
-      querystring: TransactionsQuerySchema,
+      querystring: {
+        type: 'object',
+        properties: {
+          userId: { type: 'number' },
+          from: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+          to: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+          category: { type: 'string' },
+          subcategory: { type: 'string' },
+          type: { type: 'string' },
+          paymentMethod: { type: 'string' },
+          q: { type: 'string' },
+          page: { type: 'string' },
+          pageSize: { type: 'string' },
+          sort: { type: 'string' }
+        }
+      },
       response: {
         200: {
           type: 'object',

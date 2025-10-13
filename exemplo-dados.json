@@ -1,0 +1,50 @@
+{
+  "transacoes": [
+    {
+      "data": "2025-02-01",
+      "descricao_original": "Transferência Pix recebida EURIVAL BATISTA NUNES",
+      "estabelecimento": "EURIVAL BATISTA NUNES",
+      "cnpj": "",
+      "tipo": "credito",
+      "valor": 60.00,
+      "categoria": "Transferência",
+      "subcategoria": "PIX Recebido",
+      "meio_pagamento": "PIX",
+      "banco_origem": "Banco do Brasil",
+      "banco_destino": "Nubank",
+      "observacoes": "",
+      "confianca_classificacao": 0.95,
+      "id_transacao": "100623576583"
+    },
+    {
+      "data": "2025-02-01",
+      "descricao_original": "Pagamento com QR Pix AUTO POSTO GK LTDA",
+      "estabelecimento": "AUTO POSTO GK LTDA",
+      "cnpj": "12.345.678/0001-90",
+      "tipo": "debito",
+      "valor": -50.00,
+      "categoria": "Combustível",
+      "subcategoria": "Posto de Gasolina",
+      "meio_pagamento": "PIX",
+      "banco_origem": "Nubank",
+      "banco_destino": "AUTO POSTO GK LTDA",
+      "observacoes": "",
+      "confianca_classificacao": 0.92,
+      "id_transacao": "100623996863"
+    }
+  ],
+  "resumoPorCategoria": [
+    {
+      "categoria": "Combustível",
+      "subcategoria": "Posto de Gasolina",
+      "qtd_transacoes": 1,
+      "total": -50.00,
+      "ticket_medio": -50.00
+    }
+  ],
+  "visaoGeral": {
+    "total_entradas": 60.00,
+    "total_saidas": 50.00,
+    "saldo_final_estimado": 10.00
+  }
+}

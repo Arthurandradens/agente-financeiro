@@ -2,16 +2,16 @@ import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
-import { config } from './config/env.js'
-import dbPlugin from './plugins/db.js'
-import authPlugin from './plugins/auth.js'
-import { createErrorHandler } from './utils/errors.js'
+import { config } from './config/env'
+import dbPlugin from './plugins/db'
+import authPlugin from './plugins/auth'
+import { createErrorHandler } from './utils/errors'
 
 // Import routes
-import healthRoute from './routes/health.route.js'
-import statementsRoute from './routes/statements.route.js'
-import transactionsRoute from './routes/transactions.route.js'
-import dashboardRoute from './routes/dashboard.route.js'
+import healthRoute from './routes/health.route'
+import statementsRoute from './routes/statements.route'
+import transactionsRoute from './routes/transactions.route'
+import dashboardRoute from './routes/dashboard.route'
 
 export async function createApp() {
   const fastify = Fastify({
@@ -58,9 +58,9 @@ export async function createApp() {
 
   // Routes
   await fastify.register(healthRoute)
-  await fastify.register(statementsRoute, { prefix: '/statements' })
-  await fastify.register(transactionsRoute, { prefix: '/transactions' })
-  await fastify.register(dashboardRoute, { prefix: '/dash' })
+  await fastify.register(statementsRoute)
+  await fastify.register(transactionsRoute)
+  await fastify.register(dashboardRoute)
 
   return fastify
 }

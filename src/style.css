@@ -1,0 +1,465 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100;
+  }
+}
+:root {
+  .p-datepicker-input{
+    /* @apply bg-gray-800; */
+    padding: 0.6rem;
+    color: #374151;
+    font-size: 0.950rem;
+    text-align: left
+  }
+}
+@layer components {
+  .card {
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700;
+  }
+  
+  .card-header {
+    @apply px-6 py-4 border-b border-gray-200 dark:border-gray-700;
+  }
+  
+  .card-content {
+    @apply px-6 py-4;
+  }
+  
+  .kpi-card {
+    @apply bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-700;
+  }
+  
+  .kpi-card.success {
+    @apply from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700;
+  }
+  
+  .kpi-card.danger {
+    @apply from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-red-200 dark:border-red-700;
+  }
+}
+
+/* ===== PRIMEVUE COMPONENTS STYLING ===== */
+
+/* DataTable - Paleta de cores consistente com a página */
+.p-datatable {
+  @apply bg-white dark:bg-gray-800 ;
+  border-radius: 0.5rem;
+}
+
+/* Cabeçalho da tabela */
+.p-datatable .p-datatable-thead > tr > th {
+  @apply bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-b border-gray-200 dark:border-gray-600;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+/* Linhas da tabela */
+.p-datatable .p-datatable-tbody > tr {
+  @apply bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700;
+}
+
+.p-datatable .p-datatable-tbody > tr:hover {
+  @apply bg-gray-50 dark:bg-gray-700;
+}
+
+.p-datatable .p-datatable-tbody > tr > td {
+  @apply text-gray-900 dark:text-gray-100 border-b border-gray-100 dark:border-gray-700;
+  padding: 0.75rem 1rem;
+}
+
+/* Rodapé da tabela */
+.p-datatable .p-datatable-tfoot > tr > td {
+  @apply bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-t border-gray-200 dark:border-gray-600;
+}
+
+/* Footer da paginação */
+.p-paginator .p-paginator-current {
+  @apply text-gray-700 dark:text-gray-200 bg-gray-700;
+}
+
+/* .p-paginator .p-paginator-total {
+  @apply text-gray-600 dark:text-gray-300  bg-gray-700;
+} */
+
+/* Paginação */
+.p-paginator {
+  @apply bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700;
+}
+
+.p-paginator .p-paginator-pages .p-paginator-page {
+  @apply text-gray-700 dark:text-gray-200 bg-gray-700;
+}
+
+/* .p-paginator .p-paginator-pages .p-paginator-page.p-highlight {
+  @apply bg-blue-600 text-white;
+} */
+
+.p-paginator .p-paginator-pages .p-paginator-page:not(.p-highlight):hover {
+  @apply bg-gray-100 dark:bg-gray-600;
+}
+
+Botões da paginação
+.p-paginator .p-paginator-first,
+.p-paginator .p-paginator-prev,
+.p-paginator .p-paginator-next,
+.p-paginator .p-paginator-last {
+  @apply text-gray-600 dark:text-gray-300;
+}
+
+.p-paginator .p-paginator-first:hover,
+.p-paginator .p-paginator-prev:hover,
+.p-paginator .p-paginator-next:hover,
+.p-paginator .p-paginator-last:hover {
+  @apply bg-gray-100 dark:bg-gray-600;
+}
+
+/* Dropdown de linhas por página */
+.p-paginator .p-dropdown {
+  @apply border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800;
+}
+
+/* Inputs de filtro e outros componentes */
+.p-inputtext {
+  @apply bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100;
+}
+
+.p-inputtext:focus {
+  @apply border-blue-500 ring-2 ring-blue-200 dark:ring-blue-800;
+}
+
+/* MultiSelect */
+/* .p-multiselect {
+  @apply bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600;
+} */
+
+/* .p-multiselect:not(.p-disabled):hover {
+  @apply border-gray-400 dark:border-gray-500;
+} */
+
+/* .p-multiselect:not(.p-disabled).p-focus {
+  @apply border-blue-500 ring-2 ring-blue-200 dark:ring-blue-800;
+} */
+
+/* .p-multiselect-panel {
+  @apply bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 shadow-lg;
+} */
+
+/* .p-multiselect-item {
+  @apply text-gray-900 dark:text-gray-100;
+} */
+
+/* .p-multiselect-item:hover {
+  @apply bg-gray-100 dark:bg-gray-700;
+} */
+
+/* .p-multiselect-item.p-highlight {
+  @apply bg-blue-600 text-white;
+} */
+
+/* Calendar/DatePicker */
+/* .p-calendar {
+  @apply bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600;
+}
+
+.p-calendar:not(.p-disabled):hover {
+  @apply border-gray-400 dark:border-gray-500;
+}
+
+.p-calendar:not(.p-disabled).p-focus {
+  @apply border-blue-500 ring-2 ring-blue-200 dark:ring-blue-800;
+} */
+/* 
+.p-datepicker {
+  @apply bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 shadow-lg;
+} */
+
+/* Badges e Tags */
+.p-badge {
+  @apply text-xs font-medium px-2 py-1 rounded-full;
+}
+
+.p-tag {
+  @apply text-xs font-medium px-2 py-1 rounded;
+}
+
+/* Tooltips */
+.p-tooltip .p-tooltip-text {
+  @apply bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-sm;
+}
+
+/* Loading states */
+.p-datatable-loading-overlay {
+  @apply bg-white/80 dark:bg-gray-800/80;
+}
+
+/* Scrollbar personalizada para dark mode */
+.p-datatable .p-datatable-scrollable-body::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.p-datatable .p-datatable-scrollable-body::-webkit-scrollbar-track {
+  @apply bg-gray-100 dark:bg-gray-700;
+}
+
+.p-datatable .p-datatable-scrollable-body::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-gray-600 rounded;
+}
+
+.p-datatable .p-datatable-scrollable-body::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400 dark:bg-gray-500;
+}
+
+/* Corrigir fundos brancos em outros elementos */
+.p-datatable .p-datatable-scrollable-body {
+  @apply bg-white dark:bg-gray-800;
+}
+
+.p-datatable .p-datatable-scrollable-header {
+  @apply bg-gray-50 dark:bg-gray-700;
+}
+
+.p-datatable .p-datatable-scrollable-footer {
+  @apply bg-gray-50 dark:bg-gray-700;
+}
+
+/* Corrigir fundo do container principal da tabela */
+.p-datatable .p-datatable-wrapper {
+  @apply bg-white dark:bg-gray-800;
+}
+
+/* Corrigir fundo dos elementos de controle */
+.p-datatable .p-datatable-header {
+  @apply bg-white dark:bg-gray-800;
+}
+
+.p-datatable .p-datatable-footer {
+  @apply bg-white dark:bg-gray-800;
+}
+
+/* Corrigir fundo dos filtros inline
+.p-datatable .p-column-filter {
+  @apply bg-white dark:bg-gray-800;
+} */
+
+.p-datatable .p-column-filter-menu {
+  @apply bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600;
+}
+
+/* Corrigir fundo dos dropdowns de filtro */
+.p-datatable .p-dropdown {
+  @apply bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600;
+}
+
+.p-datatable .p-dropdown-panel {
+  @apply bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600;
+}
+
+/* Corrigir fundo dos inputs de filtro */
+.p-datatable .p-inputtext {
+  @apply bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100;
+}
+
+/* Corrigir fundo dos botões de ação */
+.p-datatable .p-button {
+  @apply bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200;
+}
+
+.p-datatable .p-button:hover {
+  @apply bg-gray-50 dark:bg-gray-700;
+}
+
+/* Corrigir fundo dos tooltips */
+.p-datatable .p-tooltip .p-tooltip-text {
+  @apply bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900;
+}
+
+/* Corrigir fundo dos overlays de loading */
+.p-datatable .p-datatable-loading-overlay {
+  @apply bg-white/80 dark:bg-gray-800/80;
+}
+
+.p-datatable .p-datatable-loading-icon {
+  @apply text-gray-600 dark:text-gray-300;
+}
+
+/* ===== CORREÇÕES GLOBAIS PARA ELEMENTOS BRANCOS ===== */
+
+/* Corrigir fundos brancos em elementos globais do PrimeVue */
+/* .p-component {
+  @apply bg-white dark:bg-gray-800;
+} */
+
+/* Corrigir fundos brancos em overlays e modais */
+/* .p-overlay {
+  @apply bg-white/80 dark:bg-gray-800/80;
+}
+
+.p-dialog {
+  @apply bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700;
+}
+
+.p-dialog .p-dialog-header {
+  @apply bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700;
+}
+
+.p-dialog .p-dialog-content {
+  @apply bg-white dark:bg-gray-800;
+}
+
+.p-dialog .p-dialog-footer {
+  @apply bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700;
+}
+ */
+/* Corrigir fundos brancos em tooltips globais */
+/* .p-tooltip {
+  @apply bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900;
+} */
+
+/* Corrigir fundos brancos em context menus */
+/* .p-contextmenu {
+  @apply bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600;
+}
+
+.p-contextmenu .p-menuitem-link {
+  @apply text-gray-900 dark:text-gray-100;
+}
+
+.p-contextmenu .p-menuitem-link:hover {
+  @apply bg-gray-100 dark:bg-gray-700;
+} */
+
+/* Corrigir fundos brancos em dropdowns globais */
+/* .p-dropdown-panel {
+  @apply bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600;
+}
+
+.p-dropdown-item {
+  @apply text-gray-900 dark:text-gray-100;
+}
+
+.p-dropdown-item:hover {
+  @apply bg-gray-100 dark:bg-gray-700;
+}
+
+.p-dropdown-item.p-highlight {
+  @apply bg-blue-600 text-white;
+} */
+
+/* Corrigir fundos brancos em autocomplete */
+/* .p-autocomplete-panel {
+  @apply bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600;
+}
+
+.p-autocomplete-item {
+  @apply text-gray-900 dark:text-gray-100;
+}
+
+.p-autocomplete-item:hover {
+  @apply bg-gray-100 dark:bg-gray-700;
+}
+
+.p-autocomplete-item.p-highlight {
+  @apply bg-blue-600 text-white;
+} */
+
+/* Corrigir fundos brancos em calendar/datepicker
+.p-datepicker-panel {
+  @apply bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600;
+}
+
+.p-datepicker-header {
+  @apply bg-white dark:bg-gray-800;
+}
+
+.p-datepicker-calendar {
+  @apply bg-white dark:bg-gray-800;
+}
+
+.p-datepicker-calendar th {
+  @apply text-gray-700 dark:text-gray-200;
+}
+
+.p-datepicker-calendar td {
+  @apply text-gray-900 dark:text-gray-100;
+}
+
+.p-datepicker-calendar td:hover {
+  @apply bg-gray-100 dark:bg-gray-700;
+}
+
+.p-datepicker-calendar td.p-datepicker-today {
+  @apply bg-blue-100 dark:bg-blue-900;
+}
+
+.p-datepicker-calendar td.p-datepicker-selected {
+  @apply bg-blue-600 text-white;
+}
+
+/* Corrigir fundos brancos em multiselect */
+/* .p-multiselect-panel {
+  @apply bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600;
+}
+
+.p-multiselect-item {
+  @apply text-gray-900 dark:text-gray-100;
+}
+
+.p-multiselect-item:hover {
+  @apply bg-gray-100 dark:bg-gray-700;
+}
+
+.p-multiselect-item.p-highlight {
+  @apply bg-blue-600 text-white;
+} */
+
+/* Corrigir fundos brancos em toast
+.p-toast {
+  @apply bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600;
+}
+
+.p-toast .p-toast-message {
+  @apply bg-white dark:bg-gray-800;
+}
+
+.p-toast .p-toast-message-content {
+  @apply bg-white dark:bg-gray-800;
+}
+
+/* Corrigir fundos brancos em progress bar */
+/* .p-progressbar {
+  @apply bg-gray-200 dark:bg-gray-700;
+}
+
+.p-progressbar .p-progressbar-value {
+  @apply bg-blue-600;
+} */ 
+
+/* Corrigir fundos brancos em spinner */
+/* .p-progress-spinner {
+  @apply text-blue-600 dark:text-blue-400;
+} */
+
+/* Corrigir fundos brancos em checkbox e radio */
+/* .p-checkbox .p-checkbox-box {
+  @apply bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600;
+} */
+
+/* .p-checkbox .p-checkbox-box.p-highlight { */
+  /* @apply bg-blue-600 border-blue-600;
+}
+
+.p-radiobutton .p-radiobutton-box {
+  @apply bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600;
+}
+
+.p-radiobutton .p-radiobutton-box.p-highlight {
+  @apply bg-blue-600 border-blue-600;
+} */ 
+

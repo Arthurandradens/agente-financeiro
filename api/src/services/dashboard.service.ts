@@ -1,6 +1,6 @@
 import { eq, and, gte, lte, sql } from 'drizzle-orm'
-import { transactions } from '../schema/index.js'
-import { isTransferenciaInterna, isPagamentoFatura, formatDateForGrouping } from '../utils/dates.js'
+import { transactions } from '../schema/index'
+import { isTransferenciaInterna, isPagamentoFatura, formatDateForGrouping } from '../utils/dates'
 import type { FastifyInstance } from 'fastify'
 
 export interface DashboardFilters {

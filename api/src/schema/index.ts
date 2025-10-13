@@ -1,3 +1,3 @@
-export * from './users.js'
-export * from './statements.js'
-export * from './transactions.js'
+export * from './users'
+export * from './statements'
+export * from './transactions'

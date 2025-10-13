@@ -1,15 +1,22 @@
 import { FastifyPluginAsync } from 'fastify'
-import { DashQuerySchema } from '../types/dto.js'
-import { DashboardService } from '../services/dashboard.service.js'
-import { HttpError } from '../utils/errors.js'
+import { DashQuerySchema } from '../types/dto'
+import { DashboardService } from '../services/dashboard.service'
+import { HttpError } from '../utils/errors'
 
 const dashboardRoute: FastifyPluginAsync = async (fastify) => {
   const dashboardService = new DashboardService(fastify)
 
-  fastify.get('/dash/overview', {
+  fastify.get('/overview', {
     config: { requireAuth: true },
     schema: {
-      querystring: DashQuerySchema,
+      querystring: {
+        type: 'object',
+        properties: {
+          userId: { type: 'number' },
+          from: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+          to: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' }
+        }
+      },
       response: {
         200: {
           type: 'object',
@@ -33,10 +40,17 @@ const dashboardRoute: FastifyPluginAsync = async (fastify) => {
     }
   })
 
-  fastify.get('/dash/by-category', {
+  fastify.get('/by-category', {
     config: { requireAuth: true },
     schema: {
-      querystring: DashQuerySchema,
+      querystring: {
+        type: 'object',
+        properties: {
+          userId: { type: 'number' },
+          from: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+          to: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' }
+        }
+      },
       response: {
         200: {
           type: 'array',
@@ -64,10 +78,18 @@ const dashboardRoute: FastifyPluginAsync = async (fastify) => {
     }
   })
 
-  fastify.get('/dash/series', {
+  fastify.get('/series', {
     config: { requireAuth: true },
     schema: {
-      querystring: DashQuerySchema,
+      querystring: {
+        type: 'object',
+        properties: {
+          userId: { type: 'number' },
+          from: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+          to: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+          groupBy: { type: 'string', enum: ['day', 'week', 'month'] }
+        }
+      },
       response: {
         200: {
           type: 'object',

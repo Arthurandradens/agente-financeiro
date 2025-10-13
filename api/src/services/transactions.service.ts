@@ -1,5 +1,5 @@
 import { eq, and, gte, lte, like, inArray, desc, asc } from 'drizzle-orm'
-import { transactions } from '../schema/index.js'
+import { transactions } from '../schema/index'
 import type { FastifyInstance } from 'fastify'
 
 export interface TransactionFilters {

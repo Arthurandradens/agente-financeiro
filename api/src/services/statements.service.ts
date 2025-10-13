@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
-import { statements, transactions } from '../schema/index.js'
-import { generateHashId } from '../utils/hash.js'
+import { statements, transactions, users } from '../schema/index'
+import { generateHashId } from '../utils/hash'
 import type { FastifyInstance } from 'fastify'
 
 export interface IngestResult {
@@ -20,6 +20,14 @@ export class StatementsService {
     transacoes: any[]
   ): Promise<IngestResult> {
     const db = this.fastify.db
+    
+    if (!db) {
+      this.fastify.log.error('Database not available in service')
+      throw new Error('Database not initialized')
+    }
+
+    // Garantir que o usuário existe (criar se não existir)
+    await this.ensureUserExists(db, userId)
 
     // Criar statement
     const [statement] = await db.insert(statements).values({
@@ -69,6 +77,21 @@ export class StatementsService {
       statementId: statement.id,
       inserted,
       duplicates
+    }
+  }
+
+  private async ensureUserExists(db: any, userId: number) {
+    // Verificar se o usuário existe
+    const existingUser = await db.select().from(users).where(eq(users.id, userId)).limit(1)
+    
+    if (existingUser.length === 0) {
+      // Criar usuário padrão se não existir
+      await db.insert(users).values({
+        id: userId,
+        name: `User ${userId}`,
+        email: `user${userId}@example.com`
+      })
+      this.fastify.log.info(`Created default user ${userId}`)
     }
   }
 

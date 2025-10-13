@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import Database from 'better-sqlite3'
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
-import { config } from '../src/config/env.js'
+import { config } from '../src/config/env'
 
 async function runMigrations() {
   console.log('🔄 Running database migrations...')
