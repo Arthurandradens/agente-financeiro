@@ -82,7 +82,6 @@ export class TransactionsService {
     // Buscar total
     const totalResult = await db.select({ count: transactions.id }).from(transactions).where(whereClause)
     const total = totalResult.length
-
     // Buscar itens
     const items = await db.select()
       .from(transactions)
@@ -90,7 +89,6 @@ export class TransactionsService {
       .orderBy(orderBy)
       .limit(pageSize)
       .offset(offset)
-
     return {
       items,
       page,

@@ -6,7 +6,7 @@ import { HttpError } from '../utils/errors'
 const transactionsRoute: FastifyPluginAsync = async (fastify) => {
   const transactionsService = new TransactionsService(fastify)
 
-  fastify.get('/', {
+  fastify.get('/transactions', {
     config: { requireAuth: true },
     schema: {
       querystring: {

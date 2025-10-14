@@ -23,9 +23,19 @@
             
             <!-- File info -->
             <div v-if="hasData" class="flex items-center space-x-2">
-              <i class="pi pi-file-excel text-green-600 dark:text-green-400"></i>
+              <i v-if="useApi" class="pi pi-cloud text-blue-600 dark:text-blue-400"></i>
+              <i v-else class="pi pi-file-excel text-green-600 dark:text-green-400"></i>
               <span class="text-sm text-gray-600 dark:text-gray-400">
                 {{ fileName }}
+                <span v-if="useApi" class="text-blue-600 dark:text-blue-400">(API)</span>
+              </span>
+            </div>
+            
+            <!-- API Error -->
+            <div v-if="apiError" class="flex items-center space-x-2">
+              <i class="pi pi-exclamation-triangle text-red-600 dark:text-red-400"></i>
+              <span class="text-sm text-red-600 dark:text-red-400">
+                Erro API: {{ apiError }}
               </span>
             </div>
           </div>
@@ -47,20 +57,52 @@
 
       <!-- Empty state -->
       <div v-else-if="!hasData">
-        <EmptyState @upload="showUpload = true" />
-       
-        <!-- Componente de teste -->
-        <!-- <TestComponent /> -->
+        <EmptyState 
+          :api-available="apiAvailable"
+          @upload="showUpload = true" 
+          @load-from-api="store.loadFromApi()"
+        />
         
-        <!-- Botão de teste direto -->
-        <!-- <div class="mt-8 text-center">
-          <Button
-            label="Teste: Carregar Arquivo"
-            icon="pi pi-upload"
-            @click="showUpload = true"
-            class="mr-4"
-          />
-        </div> -->
+        <!-- API Options -->
+        <div v-if="apiAvailable" class="mt-8 text-center">
+          <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+            <div class="flex items-center justify-center mb-4">
+              <i class="pi pi-cloud text-blue-600 dark:text-blue-400 text-2xl mr-2"></i>
+              <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-100">
+                API Backend Disponível
+              </h3>
+            </div>
+            <p class="text-blue-700 dark:text-blue-300 mb-4">
+              Seus dados estão disponíveis na API. Clique para carregar automaticamente.
+            </p>
+            <Button
+              label="Carregar da API"
+              icon="pi pi-cloud"
+              @click="store.loadFromApi()"
+              class="mr-4"
+            />
+            <Button
+              label="Upload Excel"
+              icon="pi pi-upload"
+              severity="secondary"
+              @click="showUpload = true"
+            />
+          </div>
+        </div>
+        
+        <!-- Fallback quando API não disponível -->
+        <div v-else class="mt-8 text-center">
+          <div class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+              API não disponível. Faça upload de um arquivo Excel para começar.
+            </p>
+            <Button
+              label="Upload Excel"
+              icon="pi pi-upload"
+              @click="showUpload = true"
+            />
+          </div>
+        </div>
       </div>
 
       <!-- Dashboard content -->
@@ -133,10 +175,13 @@ import EmptyState from '@/components/EmptyState.vue'
 const store = useDashboardStore()
 const showUpload = ref(false)
 const isDark = ref(false)
+const apiAvailable = ref(false)
 
 const hasData = computed(() => store.hasData)
 const loading = computed(() => store.loading)
 const fileName = computed(() => store.fileName)
+const useApi = computed(() => store.useApi)
+const apiError = computed(() => store.apiError)
 
 const toggleDarkMode = () => {
   isDark.value = !isDark.value
@@ -148,7 +193,7 @@ const loadExampleData = () => {
 //       store.setData(exampleData, 'exemplo-dados.xlsx')
 }
 
-onMounted(() => {
+onMounted(async () => {
   // Load dark mode preference
   const savedDarkMode = localStorage.getItem('darkMode')
   if (savedDarkMode === 'true') {
@@ -156,10 +201,20 @@ onMounted(() => {
     document.documentElement.classList.add('dark')
   }
   
-  // Try to load cached data
-  const cached = loadFromLocalStorage()
-  if (cached) {
-    store.setData(cached.data, cached.fileName)
+  // Tentar carregar da API automaticamente
+  try {
+    const isApiHealthy = await store.checkApiHealth()
+    if (isApiHealthy) {
+      apiAvailable.value = true
+      await store.loadFromApi()
+    }
+  } catch (error) {
+    console.log('API não disponível, tentando carregar cache local')
+    // Try to load cached data
+    const cached = loadFromLocalStorage()
+    if (cached) {
+      store.setData(cached.data, cached.fileName)
+    }
   }
 })
 </script>

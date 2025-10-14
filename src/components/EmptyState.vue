@@ -5,18 +5,32 @@
       Nenhum arquivo carregado
     </h3>
     <p class="text-gray-600 dark:text-gray-400 mb-6 max-w-md">
-      Carregue um arquivo Excel (.xlsx) para visualizar o dashboard financeiro com gráficos e análises.
+      Carregue um arquivo Excel (.xlsx) ou use a API para visualizar o dashboard financeiro com gráficos e análises.
     </p>
-    <Button
-      label="Carregar Arquivo"
-      icon="pi pi-upload"
-      @click="$emit('upload')"
-    />
+    <div class="flex gap-4">
+      <Button
+        label="Carregar Arquivo"
+        icon="pi pi-upload"
+        @click="$emit('upload')"
+      />
+      <Button
+        v-if="apiAvailable"
+        label="Carregar da API"
+        icon="pi pi-cloud"
+        severity="secondary"
+        @click="$emit('loadFromApi')"
+      />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+defineProps<{
+  apiAvailable?: boolean
+}>()
+
 defineEmits<{
   upload: []
+  loadFromApi: []
 }>()
 </script>

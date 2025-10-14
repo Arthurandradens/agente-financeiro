@@ -60,7 +60,7 @@ export async function createApp() {
   await fastify.register(healthRoute)
   await fastify.register(statementsRoute)
   await fastify.register(transactionsRoute)
-  await fastify.register(dashboardRoute)
+  await fastify.register(dashboardRoute, { prefix: '/dash' })
 
   return fastify
 }

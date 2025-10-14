@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Transaction, ExcelData, Filters, KPIs } from '@/types'
+import type { ExcelData, Filters, KPIs } from '@/types'
 import { api } from '@/utils/api'
 
 export const useDashboardStore = defineStore('dashboard', () => {
@@ -105,6 +105,18 @@ export const useDashboardStore = defineStore('dashboard', () => {
   })
   
   const kpis = computed((): KPIs => {
+    // Se estiver usando API, usar dados do overview
+    if (useApi.value && data.value?.visaoGeral) {
+
+      return {
+        entradas: data.value.visaoGeral.total_entradas || 0,
+        saidas: data.value.visaoGeral.total_saidas || 0,
+        saldo: data.value.visaoGeral.saldo_final_estimado || 0,
+        tarifas: data.value.visaoGeral.tarifas // TODO: Adicionar tarifas no overview da API se necessário
+      }
+    }
+    
+    // Fallback: calcular localmente (modo Excel)
     const entradas = eligibleIncomes.value.reduce((sum, t) => sum + t.valor, 0)
     const saidas = eligibleExpenses.value.reduce((sum, t) => sum + Math.abs(t.valor), 0)
     const saldo = entradas - saidas
@@ -118,6 +130,22 @@ export const useDashboardStore = defineStore('dashboard', () => {
   })
   
   const chartCategoryData = computed(() => {
+
+    if (useApi.value && data.value?.visaoGeral) {
+
+      return {
+        labels: data.value.resumoPorCategoria.map((cat: any) => cat.categoria),
+        datasets: [{
+          label: 'Gastos por Categoria',
+          data: data.value.resumoPorCategoria.map((cat: any) => cat.total),
+          backgroundColor: [
+            '#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', 
+            '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6b7280'
+          ]
+        }]
+      }
+    }
+
     if (!data.value) return { labels: [], datasets: [] }
     
     // Agrupar gastos por categoria
@@ -144,6 +172,21 @@ export const useDashboardStore = defineStore('dashboard', () => {
   })
   
   const chartSubcategoryData = computed(() => {
+
+
+    if (useApi.value && data.value?.visaoGeral) {
+
+      return {
+        labels : data.value.resumoPorCategoria.map((cat: any) => cat.subcategoria),
+        datasets: [{
+          label: 'Top 10 Subcategorias',
+          data: data.value.resumoPorCategoria.map((cat: any) => cat.total),
+          backgroundColor: '#2563eb'
+        }]
+      }
+    }
+
+
     if (!data.value) return { labels: [], datasets: [] }
     
     // Agrupar gastos por subcategoria e pegar top 10
@@ -313,36 +356,68 @@ export const useDashboardStore = defineStore('dashboard', () => {
   // API Actions
   const fetchFromApi = async () => {
     if (!useApi.value) return
-    
+
     loading.value = true
     apiError.value = null
-    
+
     try {
       // Verificar se API está disponível
       await api.health()
-      
-      // Buscar dados do dashboard
-      const [overview, byCategory, series] = await Promise.all([
+
+      // Buscar transações completas
+      const transactionsResult = await api.getTransactions({ 
+        userId: 1,
+        page: 1,
+        pageSize: 1000 // Buscar todas as transações
+      })
+
+      // Buscar dados agregados do dashboard
+      const [overview, byCategory] = await Promise.all([
         api.getOverview({ userId: 1 }),
-        api.getByCategory({ userId: 1 }),
-        api.getSeries({ userId: 1, groupBy: selectedTrendPeriod.value })
+        api.getByCategory({ userId: 1 })
       ])
-      
-      // Simular estrutura ExcelData para compatibilidade
-      const mockData: ExcelData = {
-        transacoes: [], // Será preenchido via getTransactions se necessário
-        resumoPorCategoria: byCategory,
-        visaoGeral: overview
+      // Montar estrutura ExcelData completa
+      const apiData: ExcelData = {
+        transacoes: transactionsResult.items || [],
+        resumoPorCategoria: byCategory.map(cat => ({
+          categoria: cat.categoria,
+          subcategoria: cat.subcategoria,
+          qtd_transacoes: cat.qty,
+          total: cat.total,
+          ticket_medio: cat.ticketMedio
+        })),
+        visaoGeral: {
+          total_entradas: overview.totalEntradas,
+          total_saidas: overview.totalSaidas,
+          saldo_final_estimado: overview.saldoFinalEstimado,
+          tarifas: overview.tarifas
+        }
       }
-      
-      data.value = mockData
+
+      data.value = apiData
       fileName.value = 'API Backend'
-      
+
     } catch (error: any) {
       apiError.value = error.message
       console.error('Erro ao buscar dados da API:', error)
     } finally {
       loading.value = false
+    }
+  }
+
+  // Carregar dados da API automaticamente
+  const loadFromApi = async () => {
+    useApi.value = true
+    await fetchFromApi()
+  }
+
+  // Verificar se API está disponível
+  const checkApiHealth = async () => {
+    try {
+      await api.health()
+      return true
+    } catch {
+      return false
     }
   }
 
@@ -399,9 +474,11 @@ export const useDashboardStore = defineStore('dashboard', () => {
     clearData,
     setTrendPeriod,
     
-    // API Actions
-    fetchFromApi,
-    fetchTransactions,
-    toggleApiMode
+            // API Actions
+            fetchFromApi,
+            fetchTransactions,
+            toggleApiMode,
+            loadFromApi,
+            checkApiHealth
   }
 })

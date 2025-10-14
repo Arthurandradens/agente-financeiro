@@ -27,6 +27,7 @@ export interface OverviewSummary {
   total_entradas: number
   total_saidas: number
   saldo_final_estimado: number
+  tarifas: number
 }
 
 export interface ExcelData {
