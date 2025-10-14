@@ -32,6 +32,21 @@ function parseDateBRtoISO(dmy) {
   const [, d, mth, y] = m;
   return `${y}-${mth}-${d}`;
 }
+function parseDateNubankToISO(dateStr) {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(dateStr).trim());
+  if (!m) return null;
+  const [, d, mth, y] = m;
+  return `${y}-${mth}-${d}`;
+}
+function detectCSVFormat(raw) {
+  if (raw.includes('RELEASE_DATE;TRANSACTION_TYPE')) {
+    return 'mercadopago';
+  } else if (raw.includes('Data,Valor,Identificador,Descrição')) {
+    return 'nubank';
+  }
+  throw new Error('Formato de CSV não reconhecido. Formatos suportados: Mercado Pago, Nubank');
+}
+
 function detectHeaderIndex(lines) {
   const headerRE = /^RELEASE_DATE;TRANSACTION_TYPE;REFERENCE_ID;TRANSACTION_NET_AMOUNT;PARTIAL_BALANCE/i;
   return lines.findIndex(l => headerRE.test(l));
@@ -63,6 +78,46 @@ function parseCSVLikeNubankTabs(raw) {
       tipo: (valor ?? 0) >= 0 ? 'credito' : 'debito',
     });
   }
+  return items;
+}
+function parseCSVNubank(raw) {
+  // normaliza quebras
+  const content = raw.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = content.split('\n').filter(l => l.trim() !== '');
+  
+  // Pular cabeçalho (linha 1: Data,Valor,Identificador,Descrição)
+  const dataLines = lines.slice(1);
+  const items = [];
+  
+  for (const line of dataLines) {
+    if (!line.trim()) continue;
+    
+    // Split por vírgula, mas cuidado com vírgulas dentro da descrição
+    // Formato: Data,Valor,Identificador,Descrição (descrição pode ter vírgulas)
+    const parts = line.split(',');
+    if (parts.length < 4) continue;
+    
+    const data = parts[0].trim();
+    const valor = parts[1].trim();
+    const identificador = parts[2].trim();
+    // Resto é descrição (pode ter vírgulas)
+    const descricao = parts.slice(3).join(',').trim();
+    
+    const valorNum = parseFloat(valor);
+    
+    items.push({
+      data: parseDateNubankToISO(data),
+      descricao_original: descricao,
+      valor: valorNum,
+      tipo: valorNum >= 0 ? 'credito' : 'debito',
+      id_transacao: identificador,
+      RELEASE_DATE: parseDateNubankToISO(data),
+      TRANSACTION_TYPE: descricao,
+      REFERENCE_ID: identificador,
+      TRANSACTION_NET_AMOUNT: valorNum
+    });
+  }
+  
   return items;
 }
 function chunk(arr, size) {
@@ -249,8 +304,25 @@ async function main() {
   const raw = fs.readFileSync(INPUT_CSV, 'utf8');
   const promptAgente = fs.readFileSync(PROMPT_PATH, 'utf8');
 
-  const transacoes = parseCSVLikeNubankTabs(raw);
-  if (!transacoes.length) {
+  // Detectar formato automaticamente
+  let format;
+  try {
+    format = detectCSVFormat(raw);
+    console.log(`📄 Formato detectado: ${format === 'mercadopago' ? 'Mercado Pago' : 'Nubank'}`);
+  } catch (error) {
+    console.error(error.message);
+    process.exit(1);
+  }
+
+  // Usar parser apropriado
+  let transacoes;
+  if (format === 'mercadopago') {
+    transacoes = parseCSVLikeNubankTabs(raw);
+  } else if (format === 'nubank') {
+    transacoes = parseCSVNubank(raw);
+  }
+  
+  if (!transacoes || !transacoes.length) {
     console.error('Nenhuma transação encontrada.');
     process.exit(1);
   }
