@@ -7,14 +7,26 @@ const dashboardRoute: FastifyPluginAsync = async (fastify) => {
   const dashboardService = new DashboardService(fastify)
 
   fastify.get('/overview', {
-    config: { requireAuth: true },
     schema: {
       querystring: {
         type: 'object',
         properties: {
           userId: { type: 'number' },
           from: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
-          to: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' }
+          to: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+          
+          // Filtros por STRING (manter compatibilidade)
+          categories: { type: 'string' },
+          subcategories: { type: 'string' },
+          paymentMethods: { type: 'string' },
+          
+          // Filtros por ID (NOVO - preferencial)
+          categoryIds: { type: 'string' },
+          subcategoryIds: { type: 'string' },
+          paymentMethodIds: { type: 'string' },
+          
+          // Busca textual
+          q: { type: 'string' }
         }
       },
       response: {
@@ -24,7 +36,8 @@ const dashboardRoute: FastifyPluginAsync = async (fastify) => {
             totalEntradas: { type: 'number' },
             totalSaidas: { type: 'number' },
             saldoFinalEstimado: { type: 'number' },
-            tarifas: { type: 'number' }
+            tarifas: { type: 'number' },
+            investimentosAportes: { type: 'number' }
           }
         }
       }
@@ -41,14 +54,26 @@ const dashboardRoute: FastifyPluginAsync = async (fastify) => {
   })
 
   fastify.get('/by-category', {
-    config: { requireAuth: true },
     schema: {
       querystring: {
         type: 'object',
         properties: {
           userId: { type: 'number' },
           from: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
-          to: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' }
+          to: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+          
+          // Filtros por STRING (manter compatibilidade)
+          categories: { type: 'string' },
+          subcategories: { type: 'string' },
+          paymentMethods: { type: 'string' },
+          
+          // Filtros por ID (NOVO - preferencial)
+          categoryIds: { type: 'string' },
+          subcategoryIds: { type: 'string' },
+          paymentMethodIds: { type: 'string' },
+          
+          // Busca textual
+          q: { type: 'string' }
         }
       },
       response: {
@@ -79,7 +104,6 @@ const dashboardRoute: FastifyPluginAsync = async (fastify) => {
   })
 
   fastify.get('/series', {
-    config: { requireAuth: true },
     schema: {
       querystring: {
         type: 'object',
@@ -87,7 +111,20 @@ const dashboardRoute: FastifyPluginAsync = async (fastify) => {
           userId: { type: 'number' },
           from: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
           to: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
-          groupBy: { type: 'string', enum: ['day', 'week', 'month'] }
+          groupBy: { type: 'string', enum: ['day', 'week', 'month'] },
+          
+          // Filtros por STRING (manter compatibilidade)
+          categories: { type: 'string' },
+          subcategories: { type: 'string' },
+          paymentMethods: { type: 'string' },
+          
+          // Filtros por ID (NOVO - preferencial)
+          categoryIds: { type: 'string' },
+          subcategoryIds: { type: 'string' },
+          paymentMethodIds: { type: 'string' },
+          
+          // Busca textual
+          q: { type: 'string' }
         }
       },
       response: {
@@ -127,6 +164,54 @@ const dashboardRoute: FastifyPluginAsync = async (fastify) => {
     } catch (error) {
       fastify.log.error(error)
       throw new HttpError(500, 'Erro ao buscar séries do dashboard')
+    }
+  })
+
+  fastify.get('/top-subcategories', {
+    schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          userId: { type: 'number' },
+          from: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+          to: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+          
+          // Filtros por STRING (manter compatibilidade)
+          categories: { type: 'string' },
+          subcategories: { type: 'string' },
+          paymentMethods: { type: 'string' },
+          
+          // Filtros por ID (NOVO - preferencial)
+          categoryIds: { type: 'string' },
+          subcategoryIds: { type: 'string' },
+          paymentMethodIds: { type: 'string' },
+          
+          // Busca textual
+          q: { type: 'string' }
+        }
+      },
+      response: {
+        200: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              subcategoria: { type: 'string' },
+              categoria: { type: 'string' },
+              total: { type: 'number' }
+            }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const filters = request.query as any
+      const result = await dashboardService.topSubcategories(filters)
+      return result
+    } catch (error) {
+      fastify.log.error(error)
+      throw new HttpError(500, 'Erro ao buscar top subcategorias')
     }
   })
 }

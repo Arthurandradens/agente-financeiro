@@ -12,6 +12,8 @@ import healthRoute from './routes/health.route'
 import statementsRoute from './routes/statements.route'
 import transactionsRoute from './routes/transactions.route'
 import dashboardRoute from './routes/dashboard.route'
+import categoriesRoute from './routes/categories.route'
+import paymentMethodsRoute from './routes/payment-methods.route'
 
 export async function createApp() {
   const fastify = Fastify({
@@ -61,6 +63,8 @@ export async function createApp() {
   await fastify.register(statementsRoute)
   await fastify.register(transactionsRoute)
   await fastify.register(dashboardRoute, { prefix: '/dash' })
+  await fastify.register(categoriesRoute)
+  await fastify.register(paymentMethodsRoute)
 
   return fastify
 }

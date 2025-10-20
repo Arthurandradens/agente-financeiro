@@ -6,10 +6,17 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "db:generate": "drizzle-kit generate",
+    "db:generate": "drizzle-kit generate:sqlite",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:push": "npm run db:generate && npm run db:migrate",
     "db:clean": "tsx scripts/clean-db.ts",
+    "seed:categories": "tsx scripts/seed-categories.ts",
+    "seed:payment-methods": "tsx scripts/seed-payment-methods.ts",
+    "backfill:transactions": "tsx scripts/backfill-transactions.ts",
+    "backfill:payment-methods": "tsx scripts/backfill-payment-methods.ts",
+    "create:view": "tsx scripts/create-view.ts",
+    "setup:db": "npm run db:push && npm run seed:categories && npm run seed:payment-methods && npm run backfill:transactions && npm run create:view",
+    "setup:payment-methods": "npm run seed:payment-methods && npm run backfill:payment-methods",
     "test": "vitest run"
   },
   "dependencies": {

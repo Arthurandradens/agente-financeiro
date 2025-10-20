@@ -189,9 +189,6 @@ const toggleDarkMode = () => {
   localStorage.setItem('darkMode', isDark.value.toString())
 }
 
-const loadExampleData = () => {
-//       store.setData(exampleData, 'exemplo-dados.xlsx')
-}
 
 onMounted(async () => {
   // Load dark mode preference

@@ -1,0 +1,99 @@
+{
+    "catalog": {
+      "categories": [
+        { "id": 100, "label": "Alimentação", "kind": "spend" },
+        { "id": 101, "label": "Alimentação/Supermercado", "parentId": 100, "kind": "spend" },
+        { "id": 102, "label": "Alimentação/Restaurante", "parentId": 100, "kind": "spend" },
+  
+        { "id": 200, "label": "Transporte", "kind": "spend" },
+        { "id": 201, "label": "Transporte/Combustível","parentId": 200, "kind": "spend" },
+        { "id": 202, "label": "Transporte/App", "parentId": 200, "kind": "spend" },
+        { "id": 203, "label": "Transporte/Onibus", "parentId": 200, "kind": "spend" },
+  
+        { "id": 500, "label": "Serviços financeiros", "kind": "fee" },
+        { "id": 502, "label": "Serviços financeiros/Cartão – Pagamento de fatura", "parentId": 500, "kind": "transfer" },
+  
+        { "id": 600, "label": "Investimentos", "kind": "invest" },
+        { "id": 601, "label": "Investimentos/Aporte", "parentId": 600, "kind": "invest" },
+        { "id": 602, "label": "Investimentos/Rendimentos", "parentId": 600, "kind": "income" },
+        { "id": 603, "label": "Investimentos/Resgate", "parentId": 600, "kind": "invest" },
+        { "id": 604, "label": "Investimentos/Aplicação", "parentId": 600, "kind": "invest" },
+
+        { "id": 700, "label": "Transferências", "kind": "transfer" },
+        { "id": 701, "label": "Transferências/Interna (Movimentação bancária)", "parentId": 700, "kind": "transfer" },
+  
+        { "id": 800, "label": "Renda/Salário", "kind": "income" },
+        { "id": 810, "label": "Moradia/Condomínio", "kind": "spend" },
+        { "id": 811, "label": "Moradia/Aluguel", "kind": "spend" },
+
+        { "id": 300, "label": "Saúde", "kind": "spend" },
+        { "id": 301, "label": "Saúde/Consulta médica", "parentId": 300, "kind": "spend" },
+        { "id": 302, "label": "Saúde/Farmácia", "parentId": 300, "kind": "spend" },
+        { "id": 303, "label": "Saúde/Plano de saúde", "parentId": 300, "kind": "spend" },
+
+        { "id": 400, "label": "Educação", "kind": "spend" },
+        { "id": 401, "label": "Educação/Curso", "parentId": 400, "kind": "spend" },
+        { "id": 402, "label": "Educação/Universidade", "parentId": 400, "kind": "spend" },
+
+        { "id": 900, "label": "Lazer", "kind": "spend" },
+        { "id": 901, "label": "Lazer/Cinema", "parentId": 900, "kind": "spend" },
+        { "id": 902, "label": "Lazer/Streaming", "parentId": 900, "kind": "spend" },
+        { "id": 903, "label": "Lazer/Esportes", "parentId": 900, "kind": "spend" },
+
+        { "id": 1000, "label": "Serviços Pessoais", "kind": "spend" },
+        { "id": 1001, "label": "Serviços Pessoais/Barbearia", "parentId": 1000, "kind": "spend" },
+        { "id": 1002, "label": "Serviços Pessoais/Estética", "parentId": 1000, "kind": "spend" },
+
+        { "id": 1200, "label": "Tecnologia", "kind": "spend" },
+        { "id": 1201, "label": "Tecnologia/Software", "parentId": 1200, "kind": "spend" },
+        { "id": 1202, "label": "Tecnologia/Assinaturas", "parentId": 1200, "kind": "spend" },
+
+        { "id": 1300, "label": "Vestuário", "kind": "spend" },
+        { "id": 1301, "label": "Vestuário/Roupas", "parentId": 1300, "kind": "spend" },
+        { "id": 1302, "label": "Vestuário/Calçados", "parentId": 1300, "kind": "spend" },
+
+        { "id": 1400, "label": "Outros", "kind": "spend" },
+        { "id": 1401, "label": "Outros/Diversos", "parentId": 1400, "kind": "spend" }
+      ],
+      "payment_methods": [
+        { "id": 1, "code": "PIX", "label": "Pix" },
+        { "id": 2, "code": "TED", "label": "TED" },
+        { "id": 3, "code": "DOC", "label": "DOC" },
+        { "id": 4, "code": "TEF", "label": "TEF Interna" },
+        { "id": 5, "code": "BOLETO", "label": "Boleto" },
+        { "id": 6, "code": "CARTAO_DEBITO", "label": "Cartão Débito" },
+        { "id": 7, "code": "CARTAO_CREDITO", "label": "Cartão Crédito" },
+        { "id": 8, "code": "SAQUE", "label": "Saque" },
+        { "id": 9, "code": "TARIFA", "label": "Tarifa/Encargo" },
+        { "id": 99, "code": "OUTRO", "label": "Outro" }
+      ]
+    },
+    "self_identifiers": {
+      "names": ["Arthur Andrade Nunes", "Arthur Andrade"],
+      "cpf_cnpj": ["023.908.292-36", ""]
+    },
+    "user_rules": [
+      {
+        "match": { "name_contains": "Wise Brasil Corretora de CÃ¢mbio Ltda." },
+        "set": { "category_id": 800, "subcategory_id": null, "movement_kind": "income" },
+        "reason": "Salário"
+      },
+      {
+        "match": { "name_contains": "Banco Cooperativo Sicredi S. A." },
+        "set": { "category_id": 810, "subcategory_id": null, "movement_kind": "spend" },
+        "reason": "Condomínio"
+      },
+      {
+        "match": { "name_contains": "Banco Cooperativo do Brasil S/A - Bancoob" },
+        "set": { "category_id": 811, "subcategory_id": null, "movement_kind": "spend" },
+        "reason": "Aluguel"
+      }
+      ,
+      {
+        "match": { "name_contains": "QR Pix CONSORCIO FENIX" },
+        "set": { "category_id": 200, "subcategory_id": 203, "movement_kind": "spend" },
+        "reason": "Transporte/Onibus"
+      }
+    ]
+  }
+  

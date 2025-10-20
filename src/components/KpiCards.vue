@@ -1,5 +1,5 @@
 <template>
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-6">
     <!-- Entradas -->
     <div class="card kpi-card success">
       <div class="card-content">
@@ -84,6 +84,28 @@
         </div>
         <p class="text-xs text-blue-600 dark:text-blue-400 mt-2">
           Serviços financeiros
+        </p>
+      </div>
+    </div>
+    
+    <!-- Investimentos (Aportes) -->
+    <div class="card kpi-card">
+      <div class="card-content">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-purple-600 dark:text-purple-400 mb-1">
+              Investimentos (Aportes)
+            </p>
+            <p class="text-2xl font-bold text-purple-700 dark:text-purple-300">
+              {{ formatCurrency(kpis.investimentosAportes) }}
+            </p>
+          </div>
+          <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-full">
+            <i class="pi pi-chart-line text-purple-600 dark:text-purple-400 text-xl"></i>
+          </div>
+        </div>
+        <p class="text-xs text-purple-600 dark:text-purple-400 mt-2">
+          Aportes em investimentos
         </p>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import { statements, transactions, users } from '../schema/index'
+import { statements, transactions, users, paymentMethods, banks } from '../schema/index'
 import { generateHashId } from '../utils/hash'
 import type { FastifyInstance } from 'fastify'
 
@@ -17,7 +17,8 @@ export class StatementsService {
     periodStart: string,
     periodEnd: string,
     sourceFile: string,
-    transacoes: any[]
+    transacoes: any[],
+    bankId?: number
   ): Promise<IngestResult> {
     const db = this.fastify.db
     
@@ -28,6 +29,16 @@ export class StatementsService {
 
     // Garantir que o usuário existe (criar se não existir)
     await this.ensureUserExists(db, userId)
+
+    // Validar bank_id se fornecido
+    let bankName = null
+    if (bankId) {
+      const bank = await db.select().from(banks).where(eq(banks.id, bankId)).limit(1)
+      if (!bank.length) {
+        throw new Error(`Invalid bank_id: ${bankId}`)
+      }
+      bankName = bank[0].name
+    }
 
     // Criar statement
     const [statement] = await db.insert(statements).values({
@@ -44,20 +55,39 @@ export class StatementsService {
     for (const tx of transacoes) {
       const hashId = tx.id_transacao || generateHashId(tx.data, tx.valor, tx.descricao_original)
       
+      // Processar payment_method_id e preencher meio_pagamento
+      let meioPagamento = tx.meio_pagamento
+      if (tx.payment_method_id) {
+        // Validar que o payment_method_id existe
+        const pm = await db.select().from(paymentMethods).where(eq(paymentMethods.id, tx.payment_method_id)).limit(1)
+        if (!pm.length) {
+          throw new Error(`Invalid payment_method_id: ${tx.payment_method_id}`)
+        }
+        // Preencher meio_pagamento automaticamente com o label
+        meioPagamento = pm[0].label
+      }
+      
       try {
         await db.insert(transactions).values({
           statementId: statement.id,
           data: tx.data,
           descricaoOriginal: tx.descricao_original,
-          estabelecimento: tx.estabelecimento,
+          estabelecimento: tx.counterparty_normalized || '',
           cnpj: tx.cnpj,
           tipo: tx.tipo,
           valor: tx.valor,
-          categoria: tx.categoria,
-          subcategoria: tx.subcategoria,
-          meioPagamento: tx.meio_pagamento,
-          bancoOrigem: tx.banco_origem,
-          bancoDestino: tx.banco_destino,
+          categoria: tx.categoria_label || '', // DEPRECATED - manter para compatibilidade
+          subcategoria: tx.subcategoria_label || '', // DEPRECATED - manter para compatibilidade
+          categoryId: tx.category_id,
+          subcategoryId: tx.subcategory_id,
+          isInternalTransfer: tx.is_internal_transfer || 0,
+          isCardBillPayment: tx.is_card_bill_payment || 0,
+          isInvestment: (tx.is_investment_aporte || 0) || (tx.is_investment_rendimento || 0) ? 1 : 0, // qualquer flag de investimento
+          isRefundOrChargeback: tx.is_refund_or_chargeback || 0,
+          paymentMethodId: tx.payment_method_id,
+          meioPagamento: meioPagamento,
+          bankId: bankId,
+          bancoOrigem: bankName, // DEPRECATED - manter para compatibilidade
           observacoes: tx.observacoes,
           confiancaClassificacao: tx.confianca_classificacao,
           idTransacao: hashId

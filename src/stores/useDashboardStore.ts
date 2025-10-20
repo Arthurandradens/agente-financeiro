@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import type { ExcelData, Filters, KPIs } from '@/types'
+import { ref, computed, watch } from 'vue'
+import type { ExcelData, Filters, KPIs, SeriesData, TopSubcategory } from '@/types'
 import { api } from '@/utils/api'
 
 export const useDashboardStore = defineStore('dashboard', () => {
@@ -21,12 +21,86 @@ export const useDashboardStore = defineStore('dashboard', () => {
 
   const selectedTrendPeriod = ref<'day' | 'week' | 'month'>('day')
 
+  // State para opções de filtro
+  const filterOptions = ref({
+    categorias: [] as Array<{ id: number, name: string, parentId?: number }>,
+    subcategorias: [] as Array<{ id: number, name: string, parentId: number }>,
+    meiosPagamento: [] as Array<{ id: number, label: string, code: string }>
+  })
+
+  // Helper para converter filtros do frontend em parâmetros de API
+  const buildApiFilters = () => {
+    const apiFilters: any = { userId: 1 }
+    
+    // Período
+    if (filters.value.periodo && filters.value.periodo.length === 2) {
+      const [startDate, endDate] = filters.value.periodo
+      apiFilters.from = startDate.toISOString().split('T')[0]
+      apiFilters.to = endDate.toISOString().split('T')[0]
+    }
+    
+    // Categorias - ENVIAR IDs
+    if (filters.value.categorias.length > 0) {
+      apiFilters.categoryIds = filters.value.categorias.join(',')
+    }
+    
+    // Subcategorias - ENVIAR IDs
+    if (filters.value.subcategorias.length > 0) {
+      apiFilters.subcategoryIds = filters.value.subcategorias.join(',')
+    }
+    
+    // Meios de Pagamento - ENVIAR IDs
+    if (filters.value.meiosPagamento.length > 0) {
+      apiFilters.paymentMethodIds = filters.value.meiosPagamento.join(',')
+    }
+    
+    // Busca textual
+    if (filters.value.buscaTexto) {
+      apiFilters.q = filters.value.buscaTexto
+    }
+    
+    return apiFilters
+  }
+
+  // Função para carregar opções de filtro
+  const loadFilterOptions = async () => {
+    try {
+      const [categories, paymentMethods] = await Promise.all([
+        api.getCategories(),
+        api.getPaymentMethods()
+      ])
+      
+      // Separar categorias e subcategorias
+      const categoriesData = categories as any
+      const paymentMethodsData = paymentMethods as any
+      
+      filterOptions.value.categorias = categoriesData.items.filter((c: any) => !c.parentId)
+      filterOptions.value.subcategorias = categoriesData.items.filter((c: any) => c.parentId)
+      filterOptions.value.meiosPagamento = paymentMethodsData.items || paymentMethodsData
+    } catch (error) {
+      console.error('Erro ao carregar opções de filtro:', error)
+    }
+  }
+
+  // Carregar opções de filtro quando o modo API for ativado
+  watch(useApi, (newValue: boolean) => {
+    if (newValue) {
+      loadFilterOptions()
+    }
+  })
+
   // Getters
   const hasData = computed(() => data.value !== null)
   
   const filteredTransactions = computed(() => {
     if (!data.value) return []
     
+    // Se usando API, dados já vêm filtrados do backend
+    if (useApi.value) {
+      return data.value.transacoes || []
+    }
+    
+    // Caso contrário (modo Excel), aplicar filtros localmente
     let transactions = data.value.transacoes || []
     
     // Aplicar filtros
@@ -69,6 +143,12 @@ export const useDashboardStore = defineStore('dashboard', () => {
   })
   
   const eligibleExpenses = computed(() => {
+    // Se usando API, dados já vêm filtrados do backend
+    if (useApi.value) {
+      return filteredTransactions.value.filter(t => t.tipo === 'debito')
+    }
+    
+    // Caso contrário (modo Excel), aplicar filtros locais
     return filteredTransactions.value.filter(t => {
       if (t.tipo !== 'debito') return false
       
@@ -90,6 +170,12 @@ export const useDashboardStore = defineStore('dashboard', () => {
   })
   
   const eligibleIncomes = computed(() => {
+    // Se usando API, dados já vêm filtrados do backend
+    if (useApi.value) {
+      return filteredTransactions.value.filter(t => t.tipo === 'credito')
+    }
+    
+    // Caso contrário (modo Excel), aplicar filtros locais
     return filteredTransactions.value.filter(t => {
       if (t.tipo !== 'credito') return false
       
@@ -107,12 +193,12 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const kpis = computed((): KPIs => {
     // Se estiver usando API, usar dados do overview
     if (useApi.value && data.value?.visaoGeral) {
-
       return {
         entradas: data.value.visaoGeral.total_entradas || 0,
         saidas: data.value.visaoGeral.total_saidas || 0,
         saldo: data.value.visaoGeral.saldo_final_estimado || 0,
-        tarifas: data.value.visaoGeral.tarifas // TODO: Adicionar tarifas no overview da API se necessário
+        tarifas: data.value.visaoGeral.tarifas || 0,
+        investimentosAportes: data.value.visaoGeral.investimentos_aportes || 0
       }
     }
     
@@ -126,13 +212,19 @@ export const useDashboardStore = defineStore('dashboard', () => {
       .filter(t => t.categoria === 'Serviços financeiros' && t.subcategoria === 'Tarifas')
       .reduce((sum, t) => sum + Math.abs(t.valor), 0)
     
-    return { entradas, saidas, saldo, tarifas }
+    // Calcular investimentos (aportes) - tipo='debito' e categoria de investimento
+    const investimentosAportes = filteredTransactions.value
+      .filter(t => t.tipo === 'debito' && t.categoria === 'Investimentos' && t.subcategoria === 'Aporte')
+      .reduce((sum, t) => sum + Math.abs(t.valor), 0)
+    
+    return { entradas, saidas, saldo, tarifas, investimentosAportes }
   })
   
   const chartCategoryData = computed(() => {
-
-    if (useApi.value && data.value?.visaoGeral) {
-
+    if (!data.value) return { labels: [], datasets: [] }
+    
+    // Se estiver usando API, usar dados do resumoPorCategoria
+    if (useApi.value && data.value?.resumoPorCategoria) {
       return {
         labels: data.value.resumoPorCategoria.map((cat: any) => cat.categoria),
         datasets: [{
@@ -145,10 +237,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
         }]
       }
     }
-
-    if (!data.value) return { labels: [], datasets: [] }
     
-    // Agrupar gastos por categoria
+    // Fallback: calcular localmente (modo Excel)
     const categoryTotals = eligibleExpenses.value.reduce((acc, t) => {
       const category = t.categoria || 'Outros'
       acc[category] = (acc[category] || 0) + Math.abs(t.valor)
@@ -171,37 +261,37 @@ export const useDashboardStore = defineStore('dashboard', () => {
     }
   })
   
-  const chartSubcategoryData = computed(() => {
-
-
-    if (useApi.value && data.value?.visaoGeral) {
-
-      return {
-        labels : data.value.resumoPorCategoria.map((cat: any) => cat.subcategoria),
-        datasets: [{
-          label: 'Top 10 Subcategorias',
-          data: data.value.resumoPorCategoria.map((cat: any) => cat.total),
-          backgroundColor: '#2563eb'
-        }]
-      }
-    }
-
-
-    if (!data.value) return { labels: [], datasets: [] }
+  const topSubcategoriesData = computed(() => {
+    if (!data.value) return []
     
-    // Agrupar gastos por subcategoria e pegar top 10
+    // Se estiver usando API, usar dados do endpoint dedicado
+    if (useApi.value && data.value?.topSubcategories) {
+      return data.value.topSubcategories
+    }
+    
+    // Fallback: calcular localmente (modo Excel)
     const subcategoryTotals = eligibleExpenses.value.reduce((acc, t) => {
       const subcategory = t.subcategoria || 'Outros'
-      acc[subcategory] = (acc[subcategory] || 0) + Math.abs(t.valor)
+      const categoria = t.categoria || 'Sem categoria'
+      if (!acc[subcategory]) {
+        acc[subcategory] = { subcategoria: subcategory, categoria, total: 0 }
+      }
+      acc[subcategory].total += Math.abs(t.valor)
       return acc
-    }, {} as Record<string, number>)
+    }, {} as Record<string, { subcategoria: string, categoria: string, total: number }>)
     
-    const sortedSubcategories = Object.entries(subcategoryTotals)
-      .sort(([,a], [,b]) => b - a)
+    return Object.values(subcategoryTotals)
+      .sort((a, b) => b.total - a.total)
       .slice(0, 10)
+  })
+
+  const chartSubcategoryData = computed(() => {
+    if (!data.value) return { labels: [], datasets: [] }
     
-    const labels = sortedSubcategories.map(([name]) => name)
-    const values = sortedSubcategories.map(([,value]) => value)
+    const topSubcategories = topSubcategoriesData.value
+    
+    const labels = topSubcategories.map(item => item.subcategoria)
+    const values = topSubcategories.map(item => item.total)
     
     return {
       labels,
@@ -216,6 +306,59 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const chartTrendData = computed(() => {
     if (!data.value) return { labels: [], datasets: [] }
     
+    // Se estiver usando API, usar dados da API
+    if (useApi.value && data.value?.seriesData) {
+      const seriesData = data.value.seriesData
+      
+      // Verificar se é o formato da API (SeriesData) ou formato Excel (Array)
+      if ('seriesEntradas' in seriesData && 'seriesSaidas' in seriesData) {
+        const apiSeriesData = seriesData as SeriesData
+      
+        // Processar dados da API (formato: { seriesEntradas: [{x, y}], seriesSaidas: [{x, y}] })
+        const entradas = apiSeriesData.seriesEntradas || []
+        const saidas = apiSeriesData.seriesSaidas || []
+        
+        // Combinar e ordenar por data
+        const allDates = [...new Set([...entradas.map((item: any) => item.x), ...saidas.map((item: any) => item.x)])].sort()
+        
+        // Criar mapas para acesso rápido
+        const entradasMap = new Map(entradas.map((item: any) => [item.x, item.y]))
+        const saidasMap = new Map(saidas.map((item: any) => [item.x, item.y]))
+        
+        // Formatar labels baseado no período
+        const formatLabel = (dateStr: string) => {
+          if (selectedTrendPeriod.value === 'day') {
+            return new Date(dateStr).toLocaleDateString('pt-BR')
+          } else if (selectedTrendPeriod.value === 'week') {
+            return `Semana ${dateStr}`
+          } else { // month
+            return new Date(dateStr).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+          }
+        }
+        
+        return {
+          labels: allDates.map(formatLabel),
+          datasets: [
+            {
+              label: 'Entradas',
+              data: allDates.map(date => entradasMap.get(date) || 0),
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.2)',
+              tension: 0.4
+            },
+            {
+              label: 'Saídas',
+              data: allDates.map(date => saidasMap.get(date) || 0),
+              borderColor: '#ef4444',
+              backgroundColor: 'rgba(239, 68, 68, 0.2)',
+              tension: 0.4
+            }
+          ]
+        }
+      }
+    }
+    
+    // Fallback: calcular localmente (modo Excel)
     const transactions = filteredTransactions.value
     
     // Função para agrupar por período
@@ -349,8 +492,31 @@ export const useDashboardStore = defineStore('dashboard', () => {
     resetFilters()
   }
 
-  const setTrendPeriod = (period: 'day' | 'week' | 'month') => {
+  const setTrendPeriod = async (period: 'day' | 'week' | 'month') => {
     selectedTrendPeriod.value = period
+    
+    // Se estiver usando API, recarregar dados com o novo período
+    if (useApi.value) {
+      await fetchSeriesFromApi()
+    }
+  }
+
+  const fetchSeriesFromApi = async () => {
+    if (!useApi.value) return
+
+    try {
+      const series = await api.getSeries({ 
+        userId: 1, 
+        groupBy: selectedTrendPeriod.value 
+      }) as SeriesData
+      
+      if (data.value) {
+        data.value.seriesData = series
+      }
+    } catch (error: any) {
+      console.error('Erro ao buscar dados de série:', error)
+      apiError.value = error.message || 'Erro ao buscar dados de série'
+    }
   }
 
   // API Actions
@@ -368,18 +534,21 @@ export const useDashboardStore = defineStore('dashboard', () => {
       const transactionsResult = await api.getTransactions({ 
         userId: 1,
         page: 1,
-        pageSize: 1000 // Buscar todas as transações
+        pageSize: 100 // Buscar até 100 transações por vez
       })
 
       // Buscar dados agregados do dashboard
-      const [overview, byCategory] = await Promise.all([
+      const [overview, byCategory, series, topSubcategories] = await Promise.all([
         api.getOverview({ userId: 1 }),
-        api.getByCategory({ userId: 1 })
-      ])
+        api.getByCategory({ userId: 1 }),
+        api.getSeries({ userId: 1, groupBy: selectedTrendPeriod.value }),
+        api.getTopSubcategories({ userId: 1 })
+      ]) as [any, any, SeriesData, TopSubcategory[]]
+      
       // Montar estrutura ExcelData completa
       const apiData: ExcelData = {
-        transacoes: transactionsResult.items || [],
-        resumoPorCategoria: byCategory.map(cat => ({
+        transacoes: (transactionsResult as any).items || [],
+        resumoPorCategoria: byCategory.map((cat: any) => ({
           categoria: cat.categoria,
           subcategoria: cat.subcategoria,
           qtd_transacoes: cat.qty,
@@ -390,8 +559,15 @@ export const useDashboardStore = defineStore('dashboard', () => {
           total_entradas: overview.totalEntradas,
           total_saidas: overview.totalSaidas,
           saldo_final_estimado: overview.saldoFinalEstimado,
-          tarifas: overview.tarifas
-        }
+          tarifas: overview.tarifas,
+          investimentos_aportes: overview.investimentosAportes
+        },
+        seriesData: series.seriesEntradas.map((item: any, index: number) => ({
+          x: item.x,
+          entradas: item.y,
+          saidas: series.seriesSaidas[index]?.y || 0
+        })),
+        topSubcategories: topSubcategories || []
       }
 
       data.value = apiData
@@ -411,6 +587,54 @@ export const useDashboardStore = defineStore('dashboard', () => {
     await fetchFromApi()
   }
 
+  // Carregar dados da API com filtros específicos
+  const fetchFromApiWithFilters = async () => {
+    if (!useApi.value) return
+
+    loading.value = true
+    apiError.value = null
+
+    try {
+      const apiFilters = buildApiFilters()
+      
+      // Buscar dados agregados COM FILTROS
+      const [overview, byCategory, series, topSubcategories, transactionsResult] = await Promise.all([
+        api.getOverview(apiFilters),
+        api.getByCategory(apiFilters),
+        api.getSeries({ ...apiFilters, groupBy: selectedTrendPeriod.value }),
+        api.getTopSubcategories(apiFilters),
+        api.getTransactions({ ...apiFilters, page: 1, pageSize: 100 })
+      ]) as [any, any, SeriesData, TopSubcategory[], any]
+      
+      // Atualizar TODOS os dados (não só agregados)
+      if (data.value) {
+        data.value.transacoes = transactionsResult.items || []
+        data.value.visaoGeral = {
+          total_entradas: overview.totalEntradas,
+          total_saidas: overview.totalSaidas,
+          saldo_final_estimado: overview.saldoFinalEstimado,
+          tarifas: overview.tarifas,
+          investimentos_aportes: overview.investimentosAportes
+        }
+        data.value.resumoPorCategoria = byCategory.map((cat: any) => ({
+          categoria: cat.categoria,
+          subcategoria: cat.subcategoria,
+          qtd_transacoes: cat.qty,
+          total: cat.total,
+          ticket_medio: cat.ticketMedio
+        }))
+        data.value.seriesData = series
+        data.value.topSubcategories = topSubcategories || []
+      }
+
+    } catch (error: any) {
+      apiError.value = error.message
+      console.error('Erro ao buscar dados filtrados da API:', error)
+    } finally {
+      loading.value = false
+    }
+  }
+
   // Verificar se API está disponível
   const checkApiHealth = async () => {
     try {
@@ -425,7 +649,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     if (!useApi.value) return []
     
     try {
-      const result = await api.getTransactions({ userId: 1, ...filters })
+      const result = await api.getTransactions({ userId: 1, ...filters }) as any
       return result.items || []
     } catch (error: any) {
       console.error('Erro ao buscar transações:', error)
@@ -460,6 +684,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     kpis,
     chartCategoryData,
     chartSubcategoryData,
+    topSubcategoriesData,
     chartTrendData,
     availableCategories,
     availableSubcategories,
@@ -474,11 +699,17 @@ export const useDashboardStore = defineStore('dashboard', () => {
     clearData,
     setTrendPeriod,
     
-            // API Actions
-            fetchFromApi,
-            fetchTransactions,
-            toggleApiMode,
-            loadFromApi,
-            checkApiHealth
+    // API Actions
+    fetchFromApi,
+    fetchFromApiWithFilters,
+    fetchSeriesFromApi,
+    fetchTransactions,
+    toggleApiMode,
+    loadFromApi,
+    checkApiHealth,
+    
+    // Filter options
+    filterOptions,
+    loadFilterOptions
   }
 })

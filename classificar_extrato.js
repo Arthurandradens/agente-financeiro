@@ -74,7 +74,7 @@ function parseCSVLikeNubankTabs(raw) {
       PARTIAL_BALANCE: parseMoneyBR(PARTIAL_BALANCE),
       // campos auxiliares que o agente usa
       descricao_original: TRANSACTION_TYPE?.trim(),
-      valor,
+      valor: valor, // manter sinal original
       tipo: (valor ?? 0) >= 0 ? 'credito' : 'debito',
     });
   }
@@ -108,7 +108,7 @@ function parseCSVNubank(raw) {
     items.push({
       data: parseDateNubankToISO(data),
       descricao_original: descricao,
-      valor: valorNum,
+      valor: valorNum, // manter sinal original
       tipo: valorNum >= 0 ? 'credito' : 'debito',
       id_transacao: identificador,
       RELEASE_DATE: parseDateNubankToISO(data),
@@ -133,8 +133,8 @@ const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const responseFormat = {
   type: 'json_schema',
   json_schema: {
-    name: 'classificacao_extrato',
-    strict: true, // força aderência ao schema
+    name: 'classificacao_extrato_db',
+    strict: true,
     schema: {
       type: 'object',
       properties: {
@@ -143,34 +143,71 @@ const responseFormat = {
           items: {
             type: 'object',
             properties: {
-              data: { type: 'string', description: 'YYYY-MM-DD' },
+              data: { type: 'string' },
               descricao_original: { type: 'string' },
-              estabelecimento: { type: 'string' },
-              cnpj: { type: 'string' },
-              tipo: { type: 'string', enum: ['credito', 'debito'] },
               valor: { type: 'number' },
-              categoria: { type: 'string' },
-              subcategoria: { type: 'string' },
+              tipo: { type: 'string', enum: ['credito','debito'] },
+              counterparty_normalized: { type: 'string' },
+              cnpj: { type: ['string','null'] },
               meio_pagamento: { type: 'string' },
-              banco_origem: { type: 'string' },
-              banco_destino: { type: 'string' },
+              bank_id: { type: 'integer' },
+
+              category_id: { type: 'integer' },
+              subcategory_id: { type: ['integer','null'] },
+              categoria_label: { type: 'string' },
+              subcategoria_label: { type: ['string','null'] },
+
+              movement_kind: { type: 'string', enum: ['spend','income','transfer','invest','fee'] },
+
+              is_internal_transfer: { type: 'integer' },
+              is_card_bill_payment: { type: 'integer' },
+              is_investment_aporte: { type: 'integer' },
+              is_investment_rendimento: { type: 'integer' },
+              is_refund_or_chargeback: { type: 'integer' },
+
               observacoes: { type: 'string' },
               confianca_classificacao: { type: 'number' },
-              id_transacao: { type: 'string' },
+              id_transacao: { type: 'string' }
             },
-            required: ['data', 'descricao_original', 'estabelecimento', 'cnpj', 'tipo', 'valor', 'categoria', 'subcategoria', 'meio_pagamento', 'banco_origem', 'banco_destino', 'observacoes', 'confianca_classificacao', 'id_transacao'],
-            additionalProperties: false,
-          },
-        },
+            required: [
+              'data',
+              'descricao_original',
+              'valor',
+              'tipo',
+              'counterparty_normalized',
+              'cnpj',
+              'meio_pagamento',
+              'bank_id',
+              'category_id',
+              'subcategory_id',
+              'categoria_label',
+              'subcategoria_label',
+              'movement_kind',
+              'is_internal_transfer',
+              'is_card_bill_payment',
+              'is_investment_aporte',
+              'is_investment_rendimento',
+              'is_refund_or_chargeback',
+              'observacoes',
+              'confianca_classificacao',
+              'id_transacao'
+            ],
+            additionalProperties: false
+          }
+        }
       },
       required: ['transacoes'],
-      additionalProperties: false,
-    },
-  },
+      additionalProperties: false
+    }
+  }
 };
 
 async function classifyBatch(systemPrompt, batch) {
+  const rules = JSON.parse(fs.readFileSync('./rules.json','utf8'));
+
   const userMsg = [
+    `As regras de classificação são:`,
+    JSON.stringify(rules, null, 2),
     `Classifique o seguinte lote de transações (JSON) conforme as regras do prompt de sistema.`,
     `Retorne no schema solicitado (apenas o JSON).`,
     `Lote com ${batch.length} itens:`,
@@ -199,6 +236,7 @@ async function classifyBatch(systemPrompt, batch) {
     if (!m) throw new Error('Falha ao parsear JSON de saída do modelo.');
     parsed = JSON.parse(m[0]);
   }
+  parsed
   return parsed.transacoes || [];
 }
 
@@ -217,13 +255,17 @@ function summarize(transacoes) {
   // resumo por categoria/subcategoria
   const mapa = new Map();
   for (const t of transacoes) {
-    const key = `${t.categoria}|||${t.subcategoria || ''}`;
-    const prev = mapa.get(key) || { categoria: t.categoria, subcategoria: t.subcategoria || '', qtd: 0, total: 0 };
+    const key = `${t.categoria_label || t.categoria}|||${t.subcategoria_label || t.subcategoria || ''}`;
+    const prev = mapa.get(key) || { 
+      categoria: t.categoria_label || t.categoria, 
+      subcategoria: t.subcategoria_label || t.subcategoria || '', 
+      qtd: 0, 
+      total: 0 
+    };
     prev.qtd += 1;
-    // saída como número positivo
-    const delta = t.tipo === 'debito' ? Math.abs(t.valor || 0) : (t.valor || 0);
-    // convencionamos total = saídas negativas, entradas positivas no CSV original — aqui guardamos “sinal humano”:
-    prev.total += (t.tipo === 'debito' ? -Math.abs(t.valor || 0) : Math.abs(t.valor || 0));
+    // usar valor com sinal correto
+    const valor = t.valor || 0;
+    prev.total += valor; // valor já vem com sinal correto
     mapa.set(key, prev);
   }
   const resumoPorCategoria = Array.from(mapa.values()).map(r => ({
@@ -246,9 +288,8 @@ function summarize(transacoes) {
 
 // regras de exclusão (coerentes ao prompt)
 function excluirDeSaidas(t) {
-  // transferências internas / pagamento de fatura, etc.
-  const cat = (t.categoria || '').toLowerCase();
-  return cat.includes('transferência interna') || cat.includes('cartão – pagamento de fatura');
+  // usar flags ao invés de strings de categoria
+  return t.is_internal_transfer === 1 || t.is_card_bill_payment === 1;
 }
 function excluirDeEntradas(t) {
   // idem acima (se algum caso especial aparecer)
@@ -261,15 +302,26 @@ function writeExcel(transacoes, resumo, outputPath) {
   const txRows = transacoes.map(t => ({
     data: t.data,
     descricao_original: t.descricao_original || '',
-    estabelecimento: t.estabelecimento || '',
-    cnpj: t.cnpj || '',
-    tipo: t.tipo,
     valor: t.valor,
-    categoria: t.categoria,
-    subcategoria: t.subcategoria || '',
+    tipo: t.tipo,
+    counterparty_normalized: t.counterparty_normalized || '',
+    cnpj: t.cnpj || '',
     meio_pagamento: t.meio_pagamento || '',
-    banco_origem: t.banco_origem || '',
-    banco_destino: t.banco_destino || '',
+    
+    // IDs e labels
+    category_id: t.category_id,
+    subcategory_id: t.subcategory_id || '',
+    categoria_label: t.categoria_label || '',
+    subcategoria_label: t.subcategoria_label || '',
+    movement_kind: t.movement_kind || '',
+    
+    // Flags
+    is_internal_transfer: t.is_internal_transfer || 0,
+    is_card_bill_payment: t.is_card_bill_payment || 0,
+    is_investment_aporte: t.is_investment_aporte || 0,
+    is_investment_rendimento: t.is_investment_rendimento || 0,
+    is_refund_or_chargeback: t.is_refund_or_chargeback || 0,
+    
     observacoes: t.observacoes || '',
     confianca_classificacao: t.confianca_classificacao ?? null,
     id_transacao: t.id_transacao || '',
@@ -306,9 +358,18 @@ async function main() {
 
   // Detectar formato automaticamente
   let format;
+  let BANK_ID;
   try {
     format = detectCSVFormat(raw);
     console.log(`📄 Formato detectado: ${format === 'mercadopago' ? 'Mercado Pago' : 'Nubank'}`);
+    
+    // Mapear formato para bank_id
+    if (format === 'mercadopago') {
+      BANK_ID = 10; // Mercado Pago
+    } else if (format === 'nubank') {
+      BANK_ID = 6; // Nubank
+    }
+    console.log(`🏦 Bank ID: ${BANK_ID}`);
   } catch (error) {
     console.error(error.message);
     process.exit(1);
@@ -341,6 +402,7 @@ async function main() {
   for (const t of classificados) {
     t.data = t.data || t.RELEASE_DATE || null;
     if (typeof t.valor === 'string') t.valor = parseMoneyBR(t.valor);
+    t.bank_id = BANK_ID; // Adicionar bank_id a cada transação
   }
 
   const resumo = summarize(classificados);
@@ -362,6 +424,7 @@ async function main() {
       periodStart,
       periodEnd,
       sourceFile: INPUT_CSV,
+      bankId: BANK_ID,
       transacoes: classificados
     };
 

@@ -27,11 +27,14 @@
             v-model="filters.periodo"
             selectionMode="range"
             :manualInput="false"
-            showIcon="true"
+            :showIcon="true"
             dateFormat="dd/mm/yy"
             placeholder="Selecionar período"
             class="w-full"
             :maxDate="new Date()"
+            @show="periodoDirty.onShow"
+            @update:modelValue="(value) => periodoDirty.onUpdate(value as [Date, Date] | null)"
+            @hide="periodoDirty.onHide"
           />
         </div>
         
@@ -42,11 +45,17 @@
           </label>
           <MultiSelect
             v-model="filters.categorias"
-            :options="availableCategories"
+            :options="store.filterOptions.categorias"
+            optionLabel="name"
+            optionValue="id"
             placeholder="Selecionar categorias"
             class="w-full"
             :showClear="true"
             :filter="true"
+            :disabled="isApplyingFilters"
+            @show="categoriasDirty.onShow"
+            @update:modelValue="categoriasDirty.onUpdate"
+            @hide="categoriasDirty.onHide"
           />
         </div>
         
@@ -57,11 +66,17 @@
           </label>
           <MultiSelect
             v-model="filters.subcategorias"
-            :options="availableSubcategories"
+            :options="store.filterOptions.subcategorias"
+            optionLabel="name"
+            optionValue="id"
             placeholder="Selecionar subcategorias"
             class="w-full"
             :showClear="true"
             :filter="true"
+            :disabled="isApplyingFilters"
+            @show="subcategoriasDirty.onShow"
+            @update:modelValue="subcategoriasDirty.onUpdate"
+            @hide="subcategoriasDirty.onHide"
           />
         </div>
         
@@ -72,11 +87,17 @@
           </label>
           <MultiSelect
             v-model="filters.meiosPagamento"
-            :options="availableMeiosPagamento"
+            :options="store.filterOptions.meiosPagamento"
+            optionLabel="label"
+            optionValue="id"
             placeholder="Selecionar meios"
             class="w-full"
             :showClear="true"
             :filter="true"
+            :disabled="isApplyingFilters"
+            @show="meiosDirty.onShow"
+            @update:modelValue="meiosDirty.onUpdate"
+            @hide="meiosDirty.onHide"
           />
         </div>
         
@@ -89,12 +110,24 @@
             v-model="filters.buscaTexto"
             placeholder="Buscar em descrições..."
             class="w-full"
+            :disabled="isApplyingFilters"
+            @focus="buscaDirty.onShow"
+            @blur="buscaDirty.onHide"
+            @input="(event) => buscaDirty.onUpdate((event.target as HTMLInputElement).value)"
           />
         </div>
       </div>
       
+      <!-- Loading indicator -->
+      <div v-if="isApplyingFilters" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div class="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+          <i class="pi pi-spin pi-spinner text-sm"></i>
+          <span class="text-sm">Aplicando filtros...</span>
+        </div>
+      </div>
+      
       <!-- Resumo dos filtros ativos -->
-      <div v-if="hasActiveFilters" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+      <div v-else-if="hasActiveFilters" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
         <div class="flex flex-wrap gap-2">
           <span class="text-sm text-gray-600 dark:text-gray-400">
             Filtros ativos:
@@ -126,17 +159,30 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useDashboardStore } from '@/stores/useDashboardStore'
 import { formatDate } from '@/utils/format'
 import { DatePicker } from 'primevue'
+import { useDirtyOnBlur } from '@/composables/useDirtyOnBlur'
 
 const store = useDashboardStore()
 
 const filters = computed(() => store.filters)
-const availableCategories = computed(() => store.availableCategories)
-const availableSubcategories = computed(() => store.availableSubcategories)
-const availableMeiosPagamento = computed(() => store.availableMeiosPagamento)
+const isApplyingFilters = computed(() => store.loading)
+
+// Handler para aplicar filtros
+const applyFilters = async () => {
+  if (store.useApi) {
+    await store.fetchFromApiWithFilters()
+  }
+}
+
+// Instâncias do composable para cada filtro
+const categoriasDirty = useDirtyOnBlur(computed(() => filters.value.categorias), applyFilters)
+const subcategoriasDirty = useDirtyOnBlur(computed(() => filters.value.subcategorias), applyFilters)
+const meiosDirty = useDirtyOnBlur(computed(() => filters.value.meiosPagamento), applyFilters)
+const periodoDirty = useDirtyOnBlur(computed(() => filters.value.periodo), applyFilters)
+const buscaDirty = useDirtyOnBlur(computed(() => filters.value.buscaTexto), applyFilters)
 
 const hasActiveFilters = computed(() => {
   return filters.value.periodo ||
@@ -151,12 +197,17 @@ const formatDateRange = (range: [Date, Date]) => {
   return `${formatDate(start)} - ${formatDate(end)}`
 }
 
-const clearFilters = () => {
+const clearFilters = async () => {
   store.resetFilters()
+  if (store.useApi) {
+    await store.fetchFromApiWithFilters()
+  }
 }
 
-// Watch para atualizar filtros no store
-watch(filters, (newFilters) => {
-  store.updateFilters(newFilters)
-}, { deep: true })
+// Carregar opções quando o componente monta
+onMounted(() => {
+  if (store.useApi) {
+    store.loadFilterOptions()
+  }
+})
 </script>

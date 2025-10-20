@@ -103,7 +103,7 @@
           </template>
         </Column>
         
-        <Column field="confianca_classificacao" header="Confiança" :sortable="true">
+        <!-- <Column field="confianca_classificacao" header="Confiança" :sortable="true">
           <template #body="{ data }">
             <div class="flex items-center gap-2">
               <span>{{ Math.round(data.confianca_classificacao * 100) }}%</span>
@@ -113,7 +113,7 @@
               </i>
             </div>
           </template>
-        </Column>
+        </Column> -->
       </DataTable>
     </div>
   </div>

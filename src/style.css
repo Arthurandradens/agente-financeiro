@@ -78,50 +78,35 @@
   @apply bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-t border-gray-200 dark:border-gray-600;
 }
 
-/* Footer da paginação */
-.p-paginator .p-paginator-current {
-  @apply text-gray-700 dark:text-gray-200 bg-gray-700;
-}
-
 /* .p-paginator .p-paginator-total {
   @apply text-gray-600 dark:text-gray-300  bg-gray-700;
 } */
 
 /* Paginação */
-.p-paginator {
+/* .p-paginator {
   @apply bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700;
-}
-
-.p-paginator .p-paginator-pages .p-paginator-page {
-  @apply text-gray-700 dark:text-gray-200 bg-gray-700;
-}
-
-/* .p-paginator .p-paginator-pages .p-paginator-page.p-highlight {
-  @apply bg-blue-600 text-white;
 } */
 
-.p-paginator .p-paginator-pages .p-paginator-page:not(.p-highlight):hover {
-  @apply bg-gray-100 dark:bg-gray-600;
+.p-paginator{
+  @apply bg-gray-50 dark:bg-gray-700;
+  background: #334155 !important;
+  color: #ffff !important;
+}
+.p-paginator-current{
+  color: #ffff !important;
+  margin-right: 0.5rem !important;
+}
+.p-paginator-page.p-paginator-page-selected{
+  background: #ffff !important;
+  color: #334155 !important;
+}
+.p-datatable-paginator-bottom {
+  border: none !important;
 }
 
-Botões da paginação
-.p-paginator .p-paginator-first,
-.p-paginator .p-paginator-prev,
-.p-paginator .p-paginator-next,
-.p-paginator .p-paginator-last {
-  @apply text-gray-600 dark:text-gray-300;
-}
-
-.p-paginator .p-paginator-first:hover,
-.p-paginator .p-paginator-prev:hover,
-.p-paginator .p-paginator-next:hover,
-.p-paginator .p-paginator-last:hover {
-  @apply bg-gray-100 dark:bg-gray-600;
-}
-
-/* Dropdown de linhas por página */
-.p-paginator .p-dropdown {
-  @apply border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800;
+.p-select-option.p-select-option-selected {
+  background: rgb(51, 65, 85, 0.9) !important;
+  color: #fff !important;
 }
 
 /* Inputs de filtro e outros componentes */
@@ -163,6 +148,15 @@ Botões da paginação
 } */
 
 /* Calendar/DatePicker */
+.p-datepicker-day-selected-range {
+  background: #6d7f9b !important;
+  color: #fff !important;
+}
+
+.p-datepicker-day-selected{
+  background: #2e3642 !important;
+  color: #fff !important;
+}
 /* .p-calendar {
   @apply bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600;
 }
@@ -447,6 +441,10 @@ Botões da paginação
 } */
 
 /* Corrigir fundos brancos em checkbox e radio */
+.p-checkbox-checked .p-checkbox-box {
+  background: #374151 !important;
+  border-color: #fff !important;
+}
 /* .p-checkbox .p-checkbox-box {
   @apply bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600;
 } */
