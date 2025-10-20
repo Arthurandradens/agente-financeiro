@@ -1,33 +1,12 @@
 {
   "version": "5",
-  "dialect": "sqlite",
+  "dialect": "pg",
   "entries": [
     {
       "idx": 0,
       "version": "5",
-      "when": 1760360944096,
-      "tag": "0000_open_tony_stark",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1760455528649,
-      "tag": "0001_bent_zuras",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1760713360174,
-      "tag": "0002_groovy_vargas",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "5",
-      "when": 1760714000000,
-      "tag": "0002_payment_methods",
+      "when": 1760989956794,
+      "tag": "0000_natural_kinsey_walden",
       "breakpoints": true
     }
   ]

@@ -28,7 +28,7 @@ const dbPlugin: FastifyPluginAsync = async (fastify) => {
     fastify.addHook('onClose', async () => {
       sqlite.close()
     })
-  } else if (dbVendor === 'postgres') {
+  } else if (dbVendor === 'postgresql') {
     // PostgreSQL setup
     const pool = new Pool({
       connectionString: process.env.DATABASE_URL

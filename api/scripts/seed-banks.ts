@@ -1,9 +1,25 @@
 import { drizzle } from 'drizzle-orm/better-sqlite3'
+import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres'
 import Database from 'better-sqlite3'
+import { Pool } from 'pg'
 import { banks } from '../src/schema/banks'
+import { config } from '../src/config/env'
 
-const sqlite = new Database('./data/app.db')
-const db = drizzle(sqlite)
+// Configurar conexão com banco
+let db: any
+let pool: Pool | null = null
+
+if (config.DB_VENDOR === 'sqlite') {
+  const sqlite = new Database('./data/app.db')
+  db = drizzle(sqlite)
+} else if (config.DB_VENDOR === 'postgresql') {
+  pool = new Pool({
+    connectionString: config.DATABASE_URL
+  })
+  db = drizzlePg(pool)
+} else {
+  throw new Error(`Unsupported DB_VENDOR: ${config.DB_VENDOR}`)
+}
 
 const banksData = [
   {
@@ -88,7 +104,11 @@ async function seedBanks() {
     console.error('❌ Erro no seed:', error)
     process.exit(1)
   } finally {
-    sqlite.close()
+    if (config.DB_VENDOR === 'sqlite') {
+      // SQLite não precisa fechar explicitamente aqui
+    } else if (config.DB_VENDOR === 'postgresql' && pool) {
+      await pool.end()
+    }
   }
 }
 
