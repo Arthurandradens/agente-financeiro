@@ -23,9 +23,6 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
 
-# Create data directory for SQLite
-RUN mkdir -p ./data
-
 # Expose port
 EXPOSE 8080
 

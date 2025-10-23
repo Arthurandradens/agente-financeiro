@@ -98,7 +98,7 @@
         
         <Column field="meio_pagamento" header="Meio" :sortable="true">
           <template #body="{ data }">
-            <span v-if="data.meio_pagamento">{{ data.meio_pagamento }}</span>
+            <span v-if="data.meioPagamento">{{ data.meioPagamento }}</span>
             <span v-else class="text-gray-400">-</span>
           </template>
         </Column>

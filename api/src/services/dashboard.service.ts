@@ -134,17 +134,17 @@ export class DashboardService {
     const baseWhere = await this.buildBaseConditions(filters)
 
     // 1. Entradas (tipo='credito' e não interna)
-    const entradasResult = await db.get(sql`
+    const entradasResult = await db.execute(sql`
       SELECT COALESCE(SUM(valor), 0) as total
       FROM transactions
       WHERE tipo = 'credito'
         AND is_internal_transfer = 0
-        AND (subcategory_id <> 603 or subcategory_id is null)
+        AND (category_id <> 603 or subcategory_id <> 603)
         ${baseWhere ? sql`AND ${baseWhere}` : sql``}
     `)
 
     // 2. Saídas (tipo='debito', não interna, não fatura, não investimento)
-    const saidasResult = await db.get(sql`
+    const saidasResult = await db.execute(sql`
       SELECT COALESCE(SUM(ABS(valor)), 0) as total
       FROM transactions
       WHERE tipo = 'debito'
@@ -155,7 +155,7 @@ export class DashboardService {
     `)
 
     // 3. Tarifas (tipo='debito', não interna, não fatura, não investimento, categoria de tarifa)
-    const tarifasResult = await db.get(sql`
+    const tarifasResult = await db.execute(sql`
       SELECT COALESCE(SUM(ABS(valor)), 0) as total
       FROM transactions
       WHERE tipo = 'debito'
@@ -166,7 +166,7 @@ export class DashboardService {
     `)
 
     // 4. Investimentos (aportes) - tipo='debito' e is_investment=1
-    const investimentosResult = await db.get(sql`
+    const investimentosResult = await db.execute(sql`
       SELECT COALESCE(SUM(ABS(valor)), 0) as total
       FROM transactions
       WHERE tipo = 'debito'
@@ -176,10 +176,10 @@ export class DashboardService {
         ${baseWhere ? sql`AND ${baseWhere}` : sql``}
     `)
 
-    const totalEntradas = (entradasResult as any)?.total || 0
-    const totalSaidas = (saidasResult as any)?.total || 0
-    const tarifas = (tarifasResult as any)?.total || 0
-    const investimentosAportes = (investimentosResult as any)?.total || 0
+    const totalEntradas = Number(entradasResult.rows[0]?.total) || 0
+    const totalSaidas = Number(saidasResult.rows[0]?.total) || 0
+    const tarifas = Number(tarifasResult.rows[0]?.total) || 0
+    const investimentosAportes = Number(investimentosResult.rows[0]?.total) || 0
 
     return {
       totalEntradas,
@@ -195,13 +195,13 @@ export class DashboardService {
     const baseWhere = await this.buildBaseConditions(filters)
 
     // Buscar apenas gastos de consumo (excluir internas, fatura, investimentos)
-    const result = await db.all(sql`
+    const result = await db.execute(sql`
       SELECT 
         COALESCE(categoria, 'Sem categoria') as categoria,
         COALESCE(subcategoria, '') as subcategoria,
         COUNT(*) as qty,
-        ROUND(SUM(ABS(valor)), 2) as total,
-        ROUND(AVG(CASE WHEN ABS(valor) > 0 THEN ABS(valor) END), 2) as ticket_medio
+        SUM(ABS(valor)) as total,
+        AVG(CASE WHEN ABS(valor) > 0 THEN ABS(valor) END) as ticket_medio
       FROM transactions
       WHERE tipo = 'debito'
         AND is_internal_transfer = 0
@@ -213,7 +213,7 @@ export class DashboardService {
       LIMIT 50
     `)
 
-    return result.map((row: any) => ({
+    return result.rows.map((row: any) => ({
       categoria: row.categoria,
       subcategoria: row.subcategoria,
       qty: row.qty,
@@ -235,10 +235,10 @@ export class DashboardService {
     }
 
     // Entradas por período
-    const entradasResult = await db.all(sql`
+    const entradasResult = await db.execute(sql`
       SELECT 
         ${sql.raw(groupByExpression)} as period,
-        ROUND(SUM(valor), 2) as entradas
+        SUM(valor) as entradas
       FROM transactions
       WHERE tipo = 'credito'
         AND is_internal_transfer = 0
@@ -248,10 +248,10 @@ export class DashboardService {
     `)
 
     // Saídas por período
-    const saidasResult = await db.all(sql`
+    const saidasResult = await db.execute(sql`
       SELECT 
         ${sql.raw(groupByExpression)} as period,
-        ROUND(SUM(ABS(valor)), 2) as saidas
+        SUM(ABS(valor)) as saidas
       FROM transactions
       WHERE tipo = 'debito'
         AND is_internal_transfer = 0
@@ -265,11 +265,11 @@ export class DashboardService {
     // Combinar resultados por período
     const periodMap = new Map()
     
-    entradasResult.forEach((row: any) => {
+    entradasResult.rows.forEach((row: any) => {
       periodMap.set(row.period, { x: row.period, entradas: row.entradas || 0, saidas: 0 })
     })
     
-    saidasResult.forEach((row: any) => {
+    saidasResult.rows.forEach((row: any) => {
       const existing = periodMap.get(row.period)
       if (existing) {
         existing.saidas = row.saidas || 0
@@ -291,11 +291,11 @@ export class DashboardService {
     const baseWhere = await this.buildBaseConditions(filters)
 
     // Buscar top 10 subcategorias (apenas gastos de consumo)
-    const result = await db.all(sql`
+    const result = await db.execute(sql`
       SELECT 
         COALESCE(subcategoria, '—') as subcategoria,
         COALESCE(categoria, 'Sem categoria') as categoria,
-        ROUND(SUM(ABS(valor)), 2) as total
+        SUM(ABS(valor)) as total
       FROM transactions
       WHERE tipo = 'debito'
         AND is_internal_transfer = 0
@@ -307,7 +307,7 @@ export class DashboardService {
       LIMIT 10
     `)
 
-    return result.map((row: any) => ({
+    return result.rows.map((row: any) => ({
       subcategoria: row.subcategoria,
       categoria: row.categoria,
       total: row.total

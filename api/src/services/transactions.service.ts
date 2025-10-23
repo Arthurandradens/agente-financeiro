@@ -146,7 +146,7 @@ export class TransactionsService {
 
       // Buscar total - usar count() para melhor performance
       const totalResult = await db.select({ count: sql`count(*)` }).from(transactions).where(whereClause)
-      const total = (totalResult[0] as any)?.count || 0
+      const total = Number(totalResult[0]?.count) || 0
 
       // Buscar itens com JOIN para payment methods
       const items = await db

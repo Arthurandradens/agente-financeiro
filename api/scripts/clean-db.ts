@@ -1,12 +1,15 @@
-import { drizzle } from 'drizzle-orm/better-sqlite3'
-import Database from 'better-sqlite3'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import { Pool } from 'pg'
 import { transactions, statements, users } from '../src/schema/index.js'
+import { config } from '../src/config/env'
 
 async function cleanDatabase() {
-  console.log('🧹 Limpando banco de dados...')
+  console.log('🧹 Limpando banco de dados PostgreSQL...')
   
-  const sqlite = new Database('./data/app.db')
-  const db = drizzle(sqlite)
+  const pool = new Pool({
+    connectionString: config.DATABASE_URL
+  })
+  const db = drizzle(pool)
   
   try {
     // Deletar em ordem (respeitando foreign keys)
@@ -19,12 +22,12 @@ async function cleanDatabase() {
     console.log('🗑️  Removendo usuários...')
     await db.delete(users)
     
-    console.log('✅ Banco de dados limpo com sucesso!')
+    console.log('✅ Banco de dados PostgreSQL limpo com sucesso!')
     
   } catch (error) {
     console.error('❌ Erro ao limpar banco:', error)
   } finally {
-    sqlite.close()
+    await pool.end()
   }
 }
 

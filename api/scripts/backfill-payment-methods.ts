@@ -1,10 +1,13 @@
-import { drizzle } from 'drizzle-orm/better-sqlite3'
-import Database from 'better-sqlite3'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import { Pool } from 'pg'
 import { transactions, paymentMethods } from '../src/schema'
 import { eq, isNull, sql } from 'drizzle-orm'
+import { config } from '../src/config/env'
 
-const sqlite = new Database('./data/app.db')
-const db = drizzle(sqlite)
+const pool = new Pool({
+  connectionString: config.DATABASE_URL
+})
+const db = drizzle(pool)
 
 async function backfillPaymentMethods() {
   console.log('🔄 Iniciando backfill de payment methods...')
@@ -180,7 +183,7 @@ async function backfillPaymentMethods() {
     console.error('❌ Erro no backfill:', error)
     process.exit(1)
   } finally {
-    sqlite.close()
+    await pool.end()
   }
 }
 

@@ -1,6 +1,6 @@
-# Configuração PostgreSQL
+# Dashboard Financeiro API - PostgreSQL
 
-Este projeto foi configurado para usar PostgreSQL como banco de dados principal.
+Este projeto utiliza PostgreSQL como banco de dados principal.
 
 ## Configuração
 
@@ -60,13 +60,16 @@ O banco PostgreSQL possui as seguintes tabelas:
 - `payment_methods` - Métodos de pagamento
 - `banks` - Bancos cadastrados
 
-## Migração do SQLite
+## Migração de Dados
 
-Se você tiver dados no SQLite que precisem ser migrados, use:
+Se você tiver dados em outros formatos que precisem ser migrados, use os scripts de ingestão da API:
 
 ```bash
-# Executar migração de dados (se necessário)
-npx tsx scripts/migrate-data-to-postgres.ts
+# Ingerir dados via API
+curl -X POST http://localhost:8080/statements/ingest \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: changeme" \
+  -d @dados.json
 ```
 
 ## Troubleshooting

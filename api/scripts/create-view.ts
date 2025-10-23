@@ -1,9 +1,12 @@
-import { drizzle } from 'drizzle-orm/better-sqlite3'
-import Database from 'better-sqlite3'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import { Pool } from 'pg'
+import { config } from '../src/config/env'
 
-// Conectar ao banco
-const sqlite = new Database('./data/app.db')
-const db = drizzle(sqlite)
+// Conectar ao banco PostgreSQL
+const pool = new Pool({
+  connectionString: config.DATABASE_URL
+})
+const db = drizzle(pool)
 
 async function createView() {
   console.log('🔍 Criando VIEW v_transactions_normalized...')
@@ -60,7 +63,7 @@ async function createView() {
     console.error('❌ Erro ao criar VIEW:', error)
     throw error
   } finally {
-    sqlite.close()
+    await pool.end()
   }
 }
 
