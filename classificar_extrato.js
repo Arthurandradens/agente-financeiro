@@ -73,9 +73,9 @@ function parseCSVLikeNubankTabs(raw) {
       TRANSACTION_NET_AMOUNT: valor,
       PARTIAL_BALANCE: parseMoneyBR(PARTIAL_BALANCE),
       // campos auxiliares que o agente usa
-      descricao_original: TRANSACTION_TYPE?.trim(),
-      valor: valor, // manter sinal original
-      tipo: (valor ?? 0) >= 0 ? 'credito' : 'debito',
+      description: TRANSACTION_TYPE?.trim(),
+      amount: valor, // manter sinal original
+      tipo: (valor ?? 0) >= 0 ? 'income' : 'spend',
     });
   }
   return items;
@@ -106,10 +106,10 @@ function parseCSVNubank(raw) {
     const valorNum = parseFloat(valor);
     
     items.push({
-      data: parseDateNubankToISO(data),
-      descricao_original: descricao,
-      valor: valorNum, // manter sinal original
-      tipo: valorNum >= 0 ? 'credito' : 'debito',
+      date: parseDateNubankToISO(data),
+      description: descricao,
+      amount: valorNum, // manter sinal original
+      tipo: valorNum >= 0 ? 'income' : 'spend',
       id_transacao: identificador,
       RELEASE_DATE: parseDateNubankToISO(data),
       TRANSACTION_TYPE: descricao,
@@ -143,54 +143,45 @@ const responseFormat = {
           items: {
             type: 'object',
             properties: {
-              data: { type: 'string' },
-              descricao_original: { type: 'string' },
-              valor: { type: 'number' },
-              tipo: { type: 'string', enum: ['credito','debito'] },
+              date: { type: 'string' },
+              description: { type: 'string' },
+              amount: { type: 'number' },
+              type: { type: 'string', enum: ['income','spend'] },
               counterparty_normalized: { type: 'string' },
-              cnpj: { type: ['string','null'] },
-              meio_pagamento: { type: 'string' },
+              payment_method: { type: 'string' },
+              payment_method_id: { type: 'integer' },
               bank_id: { type: 'integer' },
 
               category_id: { type: 'integer' },
               subcategory_id: { type: ['integer','null'] },
-              categoria_label: { type: 'string' },
-              subcategoria_label: { type: ['string','null'] },
+              category_label: { type: 'string' },
+              subcategory_label: { type: ['string','null'] },
 
               movement_kind: { type: 'string', enum: ['spend','income','transfer','invest','fee'] },
 
               is_internal_transfer: { type: 'integer' },
               is_card_bill_payment: { type: 'integer' },
               is_investment_aporte: { type: 'integer' },
-              is_investment_rendimento: { type: 'integer' },
-              is_refund_or_chargeback: { type: 'integer' },
-
-              observacoes: { type: 'string' },
-              confianca_classificacao: { type: 'number' },
-              id_transacao: { type: 'string' }
+              is_investment_rendimento: { type: 'integer' }
             },
             required: [
-              'data',
-              'descricao_original',
-              'valor',
-              'tipo',
+              'date',
+              'description',
+              'amount',
+              'type',
               'counterparty_normalized',
-              'cnpj',
-              'meio_pagamento',
+              'payment_method',
+              'payment_method_id',
               'bank_id',
               'category_id',
               'subcategory_id',
-              'categoria_label',
-              'subcategoria_label',
+              'category_label',
+              'subcategory_label',
               'movement_kind',
               'is_internal_transfer',
               'is_card_bill_payment',
               'is_investment_aporte',
-              'is_investment_rendimento',
-              'is_refund_or_chargeback',
-              'observacoes',
-              'confianca_classificacao',
-              'id_transacao'
+              'is_investment_rendimento'
             ],
             additionalProperties: false
           }
@@ -243,28 +234,28 @@ async function classifyBatch(systemPrompt, batch) {
 // ======== RESUMOS LOCAIS ========
 function summarize(transacoes) {
   const totalEntradas = transacoes
-    .filter(t => t.tipo === 'credito' && !excluirDeEntradas(t))
-    .reduce((acc, t) => acc + (t.valor || 0), 0);
+    .filter(t => t.type === 'income' && !excluirDeEntradas(t))
+    .reduce((acc, t) => acc + (t.amount || 0), 0);
 
   const totalSaidas = transacoes
-    .filter(t => t.tipo === 'debito' && !excluirDeSaidas(t))
-    .reduce((acc, t) => acc + Math.abs(t.valor || 0), 0);
+    .filter(t => t.type === 'spend' && !excluirDeSaidas(t))
+    .reduce((acc, t) => acc + Math.abs(t.amount || 0), 0);
 
   const saldoFinalEstimado = totalEntradas - totalSaidas;
 
   // resumo por categoria/subcategoria
   const mapa = new Map();
   for (const t of transacoes) {
-    const key = `${t.categoria_label || t.categoria}|||${t.subcategoria_label || t.subcategoria || ''}`;
+    const key = `${t.category_label || t.category}|||${t.subcategory_label || t.subcategory || ''}`;
     const prev = mapa.get(key) || { 
-      categoria: t.categoria_label || t.categoria, 
-      subcategoria: t.subcategoria_label || t.subcategoria || '', 
+      categoria: t.category_label || t.category, 
+      subcategoria: t.subcategory_label || t.subcategory || '', 
       qtd: 0, 
       total: 0 
     };
     prev.qtd += 1;
     // usar valor com sinal correto
-    const valor = t.valor || 0;
+    const valor = t.amount || 0;
     prev.total += valor; // valor já vem com sinal correto
     mapa.set(key, prev);
   }
@@ -300,19 +291,18 @@ function excluirDeEntradas(t) {
 function writeExcel(transacoes, resumo, outputPath) {
   // Transações
   const txRows = transacoes.map(t => ({
-    data: t.data,
-    descricao_original: t.descricao_original || '',
-    valor: t.valor,
-    tipo: t.tipo,
+    data: t.date,
+    descricao_original: t.description || '',
+    valor: t.amount,
+    tipo: t.type,
     counterparty_normalized: t.counterparty_normalized || '',
-    cnpj: t.cnpj || '',
-    meio_pagamento: t.meio_pagamento || '',
+    meio_pagamento: t.payment_method || '',
     
     // IDs e labels
     category_id: t.category_id,
     subcategory_id: t.subcategory_id || '',
-    categoria_label: t.categoria_label || '',
-    subcategoria_label: t.subcategoria_label || '',
+    categoria_label: t.category_label || '',
+    subcategoria_label: t.subcategory_label || '',
     movement_kind: t.movement_kind || '',
     
     // Flags
@@ -320,11 +310,6 @@ function writeExcel(transacoes, resumo, outputPath) {
     is_card_bill_payment: t.is_card_bill_payment || 0,
     is_investment_aporte: t.is_investment_aporte || 0,
     is_investment_rendimento: t.is_investment_rendimento || 0,
-    is_refund_or_chargeback: t.is_refund_or_chargeback || 0,
-    
-    observacoes: t.observacoes || '',
-    confianca_classificacao: t.confianca_classificacao ?? null,
-    id_transacao: t.id_transacao || '',
   }));
   const wsTx = XLSX.utils.json_to_sheet(txRows);
 
@@ -400,8 +385,8 @@ async function main() {
 
   // pós-processo simples: se o modelo não preencher alguns campos opcionais, garanta defaults
   for (const t of classificados) {
-    t.data = t.data || t.RELEASE_DATE || null;
-    if (typeof t.valor === 'string') t.valor = parseMoneyBR(t.valor);
+    t.date = t.date || t.RELEASE_DATE || null;
+    if (typeof t.amount === 'string') t.amount = parseMoneyBR(t.amount);
     t.bank_id = BANK_ID; // Adicionar bank_id a cada transação
   }
 
@@ -415,7 +400,7 @@ async function main() {
     console.log('📤 Enviando dados para API...');
     
     // Detectar período do CSV
-    const dates = classificados.map(t => t.data).filter(Boolean);
+    const dates = classificados.map(t => t.date).filter(Boolean);
     const periodStart = dates.length > 0 ? dates.sort()[0] : '2025-01-01';
     const periodEnd = dates.length > 0 ? dates.sort().reverse()[0] : '2025-01-31';
     

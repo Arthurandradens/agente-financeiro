@@ -20,7 +20,7 @@ const categoriesRoute: FastifyPluginAsync = async (fastify) => {
                   name: { type: 'string' },
                   slug: { type: 'string' },
                   kind: { type: 'string' },
-                  parentId: { type: 'number' }
+                  parentId: { type: ['number', 'null'] }
                 }
               }
             },

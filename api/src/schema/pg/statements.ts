@@ -3,9 +3,9 @@ import { users } from './users'
 
 export const statements = pgTable('statements', {
   id: serial('id').primaryKey(),
-  userId: integer('user_id').notNull().references(() => users.id),
-  periodStart: varchar('period_start').notNull(),
-  periodEnd: varchar('period_end').notNull(),
-  sourceFile: varchar('source_file').notNull(),
-  createdAt: timestamp('created_at').notNull().defaultNow()
+  user_id: integer('user_id').notNull().references(() => users.id),
+  period_start: varchar('period_start').notNull(),
+  period_end: varchar('period_end').notNull(),
+  source_file: varchar('source_file').notNull(),
+  created_at: timestamp('created_at').notNull().defaultNow()
 })

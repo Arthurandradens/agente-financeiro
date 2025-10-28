@@ -19,36 +19,29 @@ const statementsRoute: FastifyPluginAsync = async (fastify) => {
             type: 'array',
             items: {
               type: 'object',
-              required: ['data', 'descricao_original', 'valor', 'tipo', 'category_id', 'movement_kind', 'id_transacao'],
+              required: ['date', 'description', 'amount', 'type', 'category_id', 'movement_kind', 'payment_method_id'],
               properties: {
-                data: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
-                descricao_original: { type: 'string' },
-                valor: { type: 'number' },
-                tipo: { type: 'string', enum: ['credito', 'debito'] },
+                date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+                description: { type: 'string' },
+                amount: { type: 'number' },
+                type: { type: 'string', enum: ['income', 'spend'] },
                 counterparty_normalized: { type: 'string' },
-                cnpj: { type: ['string', 'null'] },
-                meio_pagamento: { type: 'string' },
+                payment_method: { type: 'string' },
+                payment_method_id: { type: 'integer' },
+                bank_id: { type: 'integer' },
                 
                 // IDs e labels
                 category_id: { type: 'integer' },
                 subcategory_id: { type: ['integer', 'null'] },
-                categoria_label: { type: 'string' },
-                subcategoria_label: { type: ['string', 'null'] },
+                category_label: { type: 'string' },
+                subcategory_label: { type: ['string', 'null'] },
                 movement_kind: { type: 'string', enum: ['spend', 'income', 'transfer', 'invest', 'fee'] },
                 
                 // Flags
                 is_internal_transfer: { type: 'integer' },
                 is_card_bill_payment: { type: 'integer' },
                 is_investment_aporte: { type: 'integer' },
-                is_investment_rendimento: { type: 'integer' },
-                is_refund_or_chargeback: { type: 'integer' },
-                
-                // Payment method
-                payment_method_id: { type: ['integer', 'null'] },
-                
-                observacoes: { type: 'string' },
-                confianca_classificacao: { type: 'number', minimum: 0, maximum: 1 },
-                id_transacao: { type: 'string' }
+                is_investment_rendimento: { type: 'integer' }
               }
             }
           }

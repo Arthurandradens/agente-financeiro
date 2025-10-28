@@ -44,62 +44,85 @@
         :scrollable="true"
         scrollHeight="400px"
       >
-        <Column field="data" header="Data" :sortable="true">
+        <Column field="date" header="Data" :sortable="true">
           <template #body="{ data }">
-            {{ formatDate(data.data) }}
+            {{ formatDate(data.date) }}
           </template>
         </Column>
         
-        <Column field="descricao_original" header="Descrição" :sortable="true">
+        <Column field="description" header="Descrição" :sortable="true">
           <template #body="{ data }">
-            <div class="max-w-xs truncate" :title="data.descricao_original">
-              {{ data.descricao_original }}
+            <div class="max-w-xs truncate" :title="data.description">
+              {{ data.description }}
             </div>
           </template>
         </Column>
         
-        <Column field="estabelecimento" header="Estabelecimento" :sortable="true">
+        <Column field="merchant" header="Estabelecimento" :sortable="true">
           <template #body="{ data }">
-            <div class="max-w-xs truncate" :title="data.estabelecimento">
-              {{ data.estabelecimento }}
+            <div class="max-w-xs truncate" :title="data.merchant">
+              {{ data.merchant }}
             </div>
           </template>
         </Column>
         
-        <Column field="tipo" header="Tipo" :sortable="true">
+        <Column field="type" header="Tipo" :sortable="true">
           <template #body="{ data }">
             <Badge 
-              :value="data.tipo === 'credito' ? 'Entrada' : 'Saída'"
-              :severity="data.tipo === 'credito' ? 'success' : 'danger'"
+              :value="data.type === 'income' ? 'Entrada' : 'Saída'"
+              :severity="data.type === 'income' ? 'success' : 'danger'"
             />
           </template>
         </Column>
         
-        <Column field="valor" header="Valor" :sortable="true">
+        <Column field="amount" header="Valor" :sortable="true">
           <template #body="{ data }">
-            <span :class="data.tipo === 'credito' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
-              {{ formatCurrency(data.tipo === 'credito' ? data.valor : -Math.abs(data.valor)) }}
+            <span :class="data.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+              {{ formatCurrency(data.type === 'income' ? data.amount : -Math.abs(data.amount)) }}
             </span>
           </template>
         </Column>
         
-        <Column field="categoria" header="Categoria" :sortable="true">
+        <Column field="category" header="Categoria" :sortable="true">
           <template #body="{ data }">
-            <Tag :value="data.categoria" severity="info" />
+            <Tag :value="data.category" severity="info" />
           </template>
         </Column>
         
-        <Column field="subcategoria" header="Subcategoria" :sortable="true">
+        <Column field="subcategory" header="Subcategoria" :sortable="true">
           <template #body="{ data }">
-            <span v-if="data.subcategoria">{{ data.subcategoria }}</span>
+            <span v-if="data.subcategory">{{ data.subcategory }}</span>
             <span v-else class="text-gray-400">-</span>
           </template>
         </Column>
         
-        <Column field="meio_pagamento" header="Meio" :sortable="true">
+        <Column field="payment_method" header="Meio" :sortable="true">
           <template #body="{ data }">
-            <span v-if="data.meioPagamento">{{ data.meioPagamento }}</span>
+            <span v-if="data.payment_method">{{ data.payment_method }}</span>
             <span v-else class="text-gray-400">-</span>
+          </template>
+        </Column>
+        
+        <Column header="Ações" :sortable="false" style="width: 120px">
+          <template #body="{ data }">
+            <div class="flex gap-2">
+              <Button
+                icon="pi pi-pencil"
+                severity="info"
+                size="small"
+                @click="$emit('edit', data)"
+                v-tooltip.top="'Editar'"
+                class="!p-2"
+              />
+              <Button
+                icon="pi pi-trash"
+                severity="danger"
+                size="small"
+                @click="confirmDelete(data)"
+                v-tooltip.top="'Excluir'"
+                class="!p-2"
+              />
+            </div>
           </template>
         </Column>
         
@@ -123,10 +146,44 @@
 import { computed } from 'vue'
 import { useDashboardStore } from '@/stores/useDashboardStore'
 import { formatCurrency, formatDate } from '@/utils/format'
+import { useConfirm } from 'primevue/useconfirm'
 
 const store = useDashboardStore()
+const confirm = useConfirm()
+
 const loading = computed(() => store.loading)
 const filteredTransactions = computed(() => store.filteredTransactions)
+console.log('filteredTransactions', filteredTransactions.value)
+console.log('Primeira transação:', filteredTransactions.value[0])
+
+// Emits
+defineEmits<{
+  edit: [transaction: any]
+}>()
+
+const confirmDelete = (transaction: any) => {
+  if (confirm) {
+    confirm.require({
+      message: `Tem certeza que deseja excluir esta transação?`,
+      header: 'Confirmar Exclusão',
+      icon: 'pi pi-exclamation-triangle',
+      rejectLabel: 'Cancelar',
+      acceptLabel: 'Excluir',
+      accept: async () => {
+        try {
+          await store.deleteTransaction(transaction.id)
+        } catch (error) {
+          console.error('Erro ao excluir transação:', error)
+        }
+      }
+    })
+  } else {
+    // Fallback para quando o ConfirmationService não estiver disponível
+    if (window.confirm('Tem certeza que deseja excluir esta transação?')) {
+      store.deleteTransaction(transaction.id)
+    }
+  }
+}
 
 const exportCSV = () => {
   if (filteredTransactions.value.length === 0) return
@@ -139,11 +196,11 @@ const exportCSV = () => {
   const csvContent = [
     headers.join(','),
     ...filteredTransactions.value.map(t => [
-      t.data,
-      `"${t.descricao_original}"`,
-      `"${t.estabelecimento}"`,
-      t.tipo === 'credito' ? 'Entrada' : 'Saída',
-      t.tipo === 'credito' ? t.valor : -Math.abs(t.valor),
+      t.date,
+      `"${t.description}"`,
+      `"${t.merchant}"`,
+      t.type === 'income' ? 'Entrada' : 'Saída',
+      t.type === 'income' ? t.amount : -Math.abs(t.amount),
       `"${t.categoria}"`,
       `"${t.subcategoria || ''}"`,
       `"${t.meio_pagamento || ''}"`,

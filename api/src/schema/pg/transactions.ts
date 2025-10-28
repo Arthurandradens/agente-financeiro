@@ -6,27 +6,20 @@ import { banks } from './banks'
 
 export const transactions = pgTable('transactions', {
   id: serial('id').primaryKey(),
-  statementId: integer('statement_id').notNull().references(() => statements.id),
-  data: varchar('data').notNull(), // YYYY-MM-DD
-  descricaoOriginal: text('descricao_original').notNull(),
-  estabelecimento: text('estabelecimento').notNull(),
-  cnpj: varchar('cnpj'),
-  tipo: varchar('tipo', { enum: ['credito', 'debito'] }).notNull(),
-  valor: real('valor').notNull(),
-  categoria: text('categoria').notNull(), // DEPRECATED - manter para compatibilidade
-  subcategoria: text('subcategoria'), // DEPRECATED - manter para compatibilidade
-  categoryId: integer('category_id').references(() => categories.id),
-  subcategoryId: integer('subcategory_id').references(() => categories.id),
-  isInternalTransfer: integer('is_internal_transfer').notNull().default(0),
-  isCardBillPayment: integer('is_card_bill_payment').notNull().default(0),
-  isInvestment: integer('is_investment').notNull().default(0),
-  isRefundOrChargeback: integer('is_refund_or_chargeback').notNull().default(0),
-  paymentMethodId: integer('payment_method_id').references(() => paymentMethods.id),
-  meioPagamento: text('meio_pagamento'), // DEPRECATED - será removido futuramente
-  bankId: integer('bank_id').references(() => banks.id),
-  bancoOrigem: text('banco_origem'), // DEPRECATED - manter para compatibilidade
-  observacoes: text('observacoes'),
-  confiancaClassificacao: real('confianca_classificacao'),
-  idTransacao: varchar('id_transacao').notNull().unique(), // hashId único
-  createdAt: timestamp('created_at').notNull().defaultNow()
+  statement_id: integer('statement_id').references(() => statements.id),
+  date: varchar('date').notNull(), // YYYY-MM-DD
+  description: text('description').notNull(),
+  merchant: text('merchant'),
+  type: varchar('type', { enum: ['income', 'spend'] }).notNull(),
+  amount: real('amount').notNull(),
+  category_id: integer('category_id').references(() => categories.id),
+  subcategory_id: integer('subcategory_id').references(() => categories.id),
+  is_internal_transfer: integer('is_internal_transfer').notNull().default(0),
+  is_card_bill_payment: integer('is_card_bill_payment').notNull().default(0),
+  is_investment: integer('is_investment').notNull().default(0),
+  payment_method_id: integer('payment_method_id').references(() => paymentMethods.id),
+  payment_method: text('payment_method'), // DEPRECATED - será removido futuramente
+  bank_id: integer('bank_id').references(() => banks.id),
+  bank_name: text('bank_name'), // DEPRECATED - manter para compatibilidade
+  created_at: timestamp('created_at').notNull().defaultNow()
 })
