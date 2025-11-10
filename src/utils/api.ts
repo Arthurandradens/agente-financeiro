@@ -1,12 +1,7 @@
 // Cliente HTTP para consumir a API do backend
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8080'
 const API_KEY = import.meta.env.VITE_API_KEY || 'changeme'
 
-interface ApiResponse<T> {
-  data?: T
-  error?: string
-  message?: string
-}
 
 class ApiClient {
   private baseUrl: string
@@ -173,6 +168,52 @@ class ApiClient {
     return this.request('/payment-methods')
   }
 
+  // Listar bancos
+  async getBanks() {
+    return this.request('/banks')
+  }
+
+  // CRUD de transações
+  async createTransaction(data: {
+    date: string
+    amount: number
+    type: 'credito' | 'debito'
+    category_id: number
+    subcategory_id?: number
+    payment_method_id: number
+    bank_id: number
+    description?: string
+    merchant?: string
+  }) {
+    return this.request('/transactions', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    })
+  }
+
+  async updateTransaction(id: number, data: {
+    date?: string
+    amount?: number
+    type?: 'credito' | 'debito'
+    category_id?: number
+    subcategory_id?: number
+    payment_method_id?: number
+    bank_id?: number
+    description?: string
+    merchant?: string
+  }) {
+    return this.request(`/transactions/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data)
+    })
+  }
+
+  async deleteTransaction(id: number) {
+    return this.request(`/transactions/${id}`, {
+      method: 'DELETE'
+    })
+  }
+
   // Ingest (para uso futuro)
   async ingestStatement(data: {
     userId: number
@@ -245,7 +286,11 @@ export const api = {
   createCategory: (data: any) => apiClient.createCategory(data),
   updateCategory: (id: number, data: any) => apiClient.updateCategory(id, data),
   deleteCategory: (id: number) => apiClient.deleteCategory(id),
-  getPaymentMethods: () => apiClient.getPaymentMethods()
+  getPaymentMethods: () => apiClient.getPaymentMethods(),
+  getBanks: () => apiClient.getBanks(),
+  createTransaction: (data: any) => apiClient.createTransaction(data),
+  updateTransaction: (id: number, data: any) => apiClient.updateTransaction(id, data),
+  deleteTransaction: (id: number) => apiClient.deleteTransaction(id)
 }
 
 export default api

@@ -4,6 +4,6 @@ export const users = pgTable('users', {
   id: serial('id').primaryKey(),
   name: varchar('name').notNull(),
   email: varchar('email').notNull().unique(),
-  apiKey: varchar('api_key'),
-  createdAt: timestamp('created_at').notNull().defaultNow()
+  api_key: varchar('api_key'),
+  created_at: timestamp('created_at').notNull().defaultNow()
 })

@@ -1,30 +1,27 @@
 export interface Transaction {
-  data: string
-  descricao_original: string
-  estabelecimento: string
-  cnpj: string
-  tipo: 'credito' | 'debito'
-  valor: number
-  categoria: string // DEPRECATED - manter para compatibilidade
-  subcategoria: string // DEPRECATED - manter para compatibilidade
-  categoryId?: number
-  subcategoryId?: number
+  id?: number
+  date: string
+  description: string
+  merchant: string
+  type: 'income' | 'spend'
+  amount: number
+  category: string // DEPRECATED - manter para compatibilidade
+  subcategory: string // DEPRECATED - manter para compatibilidade
+  category_id?: number
+  subcategory_id?: number
   category_name?: string
   subcategory_name?: string
   category_slug?: string
   subcategory_slug?: string
   category_kind?: 'spend' | 'income' | 'transfer' | 'invest' | 'fee'
-  isInternalTransfer?: number
-  isCardBillPayment?: number
-  isInvestment?: number
-  isRefundOrChargeback?: number
+  is_internal_transfer?: number
+  is_card_bill_payment?: number
+  is_investment?: number
   expense_effective?: number
   income_effective?: number
-  meio_pagamento: string
+  payment_method: string
+  payment_method_id?: number
   bank_id?: number
-  observacoes: string
-  confianca_classificacao: number
-  id_transacao: string
 }
 
 export interface CategorySummary {
@@ -120,4 +117,35 @@ export interface SeriesDataPoint {
 export interface SeriesData {
   seriesEntradas: SeriesDataPoint[]
   seriesSaidas: SeriesDataPoint[]
+}
+
+// Novos tipos para CRUD de transações
+export interface Bank {
+  id: number
+  code: string
+  name: string
+}
+
+export interface TransactionCreateDTO {
+  date: string
+  amount: number
+  type: 'income' | 'spend'
+  category_id: number
+  subcategory_id?: number
+  payment_method_id: number
+  bank_id: number
+  description?: string
+  merchant?: string
+}
+
+export interface TransactionUpdateDTO {
+  date?: string
+  amount?: number
+  type?: 'income' | 'spend'
+  category_id?: number
+  subcategory_id?: number
+  payment_method_id?: number
+  bank_id?: number
+  description?: string
+  merchant?: string
 }

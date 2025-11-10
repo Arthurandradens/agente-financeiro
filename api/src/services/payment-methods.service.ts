@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import { paymentMethods } from '../schema/payment-methods'
+import { paymentMethods } from '../schema/pg/payment-methods'
 import type { FastifyInstance } from 'fastify'
 
 export interface PaymentMethod {

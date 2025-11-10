@@ -8,9 +8,8 @@ import App from './App.vue'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import DatePicker from 'primevue/datepicker'
-// DatePicker não existe no PrimeVue, usando Calendar
 import MultiSelect from 'primevue/multiselect'
-import Dropdown from 'primevue/dropdown'
+import Select from 'primevue/select'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Card from 'primevue/card'
@@ -19,6 +18,11 @@ import ToastService from 'primevue/toastservice'
 import ProgressSpinner from 'primevue/progressspinner'
 import Badge from 'primevue/badge'
 import Tag from 'primevue/tag'
+import ConfirmDialog from 'primevue/confirmdialog'
+import ConfirmationService from 'primevue/confirmationservice'
+import Tooltip from 'primevue/tooltip'
+import InputNumber from 'primevue/inputnumber'
+import Textarea from 'primevue/textarea'
 
 // PrimeVue icons
 import 'primeicons/primeicons.css'
@@ -42,15 +46,15 @@ app.use(PrimeVue, {
   }
 })
 app.use(ToastService)
+app.use(ConfirmationService)
 
 // Register components globally
 
 app.component('Button', Button)
 app.component('InputText', InputText)
 app.component('DatePicker', DatePicker)
-// DatePicker não registrado, usando Calendar
 app.component('MultiSelect', MultiSelect)
-app.component('Dropdown', Dropdown)
+app.component('Select', Select)
 app.component('DataTable', DataTable)
 app.component('Column', Column)
 app.component('Card', Card)
@@ -58,5 +62,11 @@ app.component('Toast', Toast)
 app.component('ProgressSpinner', ProgressSpinner)
 app.component('Badge', Badge)
 app.component('Tag', Tag)
+app.component('ConfirmDialog', ConfirmDialog)
+app.component('InputNumber', InputNumber)
+app.component('Textarea', Textarea)
+
+// Register directives
+app.directive('tooltip', Tooltip)
 
 app.mount('#app')

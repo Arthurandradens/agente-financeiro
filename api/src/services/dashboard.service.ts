@@ -66,43 +66,31 @@ export class DashboardService {
     
     // Filtros de data
     if (filters.from) {
-      baseConditions.push(gte(transactions.data, filters.from))
+      baseConditions.push(gte(transactions.date, filters.from))
     }
     if (filters.to) {
-      baseConditions.push(lte(transactions.data, filters.to))
+      baseConditions.push(lte(transactions.date, filters.to))
     }
     
     // FILTROS POR ID (preferencial)
     if (filters.categoryIds) {
       const categoryIdList = filters.categoryIds.split(',').map(id => parseInt(id)).filter(id => !isNaN(id))
       if (categoryIdList.length > 0) {
-        baseConditions.push(inArray(transactions.categoryId, categoryIdList))
-      }
-    } else if (filters.categories) {
-      // Fallback: filtro por string (compatibilidade)
-      const categoryList = filters.categories.split(',').filter(Boolean)
-      if (categoryList.length > 0) {
-        baseConditions.push(inArray(transactions.categoria, categoryList))
+        baseConditions.push(inArray(transactions.category_id, categoryIdList))
       }
     }
 
     if (filters.subcategoryIds) {
       const subcategoryIdList = filters.subcategoryIds.split(',').map(id => parseInt(id)).filter(id => !isNaN(id))
       if (subcategoryIdList.length > 0) {
-        baseConditions.push(inArray(transactions.subcategoryId, subcategoryIdList))
+        baseConditions.push(inArray(transactions.subcategory_id, subcategoryIdList))
       }
-    } else if (filters.subcategories) {
-      // Fallback: filtro por string (compatibilidade)
-      const subcategoryList = filters.subcategories.split(',').filter(Boolean)
-      if (subcategoryList.length > 0) {
-        baseConditions.push(inArray(transactions.subcategoria, subcategoryList))
-      }
-    }
+    } 
 
     if (filters.paymentMethodIds) {
       const pmIdList = filters.paymentMethodIds.split(',').map(id => parseInt(id)).filter(id => !isNaN(id))
       if (pmIdList.length > 0) {
-        baseConditions.push(inArray(transactions.paymentMethodId, pmIdList))
+        baseConditions.push(inArray(transactions.payment_method_id, pmIdList))
       }
     } else if (filters.paymentMethods) {
       // Fallback: filtro por código (compatibilidade)
@@ -110,7 +98,7 @@ export class DashboardService {
       if (paymentList.length > 0) {
         const pmIds = await this.getPaymentMethodIds(paymentList)
         if (pmIds.length > 0) {
-          baseConditions.push(inArray(transactions.paymentMethodId, pmIds))
+          baseConditions.push(inArray(transactions.payment_method_id, pmIds))
         }
       }
     }
@@ -120,8 +108,8 @@ export class DashboardService {
       const searchTerm = `%${filters.q.toLowerCase()}%`
       baseConditions.push(
         sql`(
-          LOWER(${transactions.descricaoOriginal}) LIKE ${searchTerm} OR 
-          LOWER(${transactions.estabelecimento}) LIKE ${searchTerm}
+          LOWER(${transactions.description}) LIKE ${searchTerm} OR 
+          LOWER(${transactions.merchant}) LIKE ${searchTerm}
         )`
       )
     }
@@ -133,53 +121,53 @@ export class DashboardService {
     const db = this.fastify.db
     const baseWhere = await this.buildBaseConditions(filters)
 
-    // 1. Entradas (tipo='credito' e não interna)
-    const entradasResult = await db.get(sql`
-      SELECT COALESCE(SUM(valor), 0) as total
+    // 1. Entradas (type='credito' e não interna)
+    const entradasResult = await db.execute(sql`
+      SELECT COALESCE(SUM(amount), 0) as total
       FROM transactions
-      WHERE tipo = 'credito'
+      WHERE type = 'income'
         AND is_internal_transfer = 0
-        AND (subcategory_id <> 603 or subcategory_id is null)
+        AND (category_id <> 603 or subcategory_id <> 603)
         ${baseWhere ? sql`AND ${baseWhere}` : sql``}
     `)
 
-    // 2. Saídas (tipo='debito', não interna, não fatura, não investimento)
-    const saidasResult = await db.get(sql`
-      SELECT COALESCE(SUM(ABS(valor)), 0) as total
+    // 2. Saídas (type='debito', não interna, não fatura, não investimento)
+    const saidasResult = await db.execute(sql`
+      SELECT COALESCE(SUM(ABS(amount)), 0) as total
       FROM transactions
-      WHERE tipo = 'debito'
+      WHERE type = 'spend'
         AND is_internal_transfer = 0
         AND is_card_bill_payment = 0
         AND is_investment = 0
         ${baseWhere ? sql`AND ${baseWhere}` : sql``}
     `)
 
-    // 3. Tarifas (tipo='debito', não interna, não fatura, não investimento, categoria de tarifa)
-    const tarifasResult = await db.get(sql`
-      SELECT COALESCE(SUM(ABS(valor)), 0) as total
+    // 3. Tarifas (type='debito', não interna, não fatura, não investimento, categoria de tarifa)
+    const tarifasResult = await db.execute(sql`
+      SELECT COALESCE(SUM(ABS(amount)), 0) as total
       FROM transactions
-      WHERE tipo = 'debito'
+      WHERE type = 'spend'
         AND is_internal_transfer = 0
         AND is_card_bill_payment = 1
         AND is_investment = 0
         ${baseWhere ? sql`AND ${baseWhere}` : sql``}
     `)
 
-    // 4. Investimentos (aportes) - tipo='debito' e is_investment=1
-    const investimentosResult = await db.get(sql`
-      SELECT COALESCE(SUM(ABS(valor)), 0) as total
+    // 4. Investimentos (aportes) - type='debito' e is_investment=1
+    const investimentosResult = await db.execute(sql`
+      SELECT COALESCE(SUM(ABS(amount)), 0) as total
       FROM transactions
-      WHERE tipo = 'debito'
+      WHERE type = 'spend'
         AND is_internal_transfer = 0
         AND is_card_bill_payment = 0
         AND is_investment = 1
         ${baseWhere ? sql`AND ${baseWhere}` : sql``}
     `)
 
-    const totalEntradas = (entradasResult as any)?.total || 0
-    const totalSaidas = (saidasResult as any)?.total || 0
-    const tarifas = (tarifasResult as any)?.total || 0
-    const investimentosAportes = (investimentosResult as any)?.total || 0
+    const totalEntradas = Number(entradasResult.rows[0]?.total) || 0
+    const totalSaidas = Number(saidasResult.rows[0]?.total) || 0
+    const tarifas = Number(tarifasResult.rows[0]?.total) || 0
+    const investimentosAportes = Number(investimentosResult.rows[0]?.total) || 0
 
     return {
       totalEntradas,
@@ -195,25 +183,26 @@ export class DashboardService {
     const baseWhere = await this.buildBaseConditions(filters)
 
     // Buscar apenas gastos de consumo (excluir internas, fatura, investimentos)
-    const result = await db.all(sql`
+    const result = await db.execute(sql`
       SELECT 
-        COALESCE(categoria, 'Sem categoria') as categoria,
-        COALESCE(subcategoria, '') as subcategoria,
+        COALESCE(categories.name, 'Sem categoria') as categoria,
+        COALESCE(categories.name, '') as subcategoria,
         COUNT(*) as qty,
-        ROUND(SUM(ABS(valor)), 2) as total,
-        ROUND(AVG(CASE WHEN ABS(valor) > 0 THEN ABS(valor) END), 2) as ticket_medio
+        SUM(ABS(amount)) as total,
+        AVG(CASE WHEN ABS(amount) > 0 THEN ABS(amount) END) as ticket_medio
       FROM transactions
-      WHERE tipo = 'debito'
+      INNER JOIN categories ON (transactions.category_id = categories.id) OR (transactions.subcategory_id = categories.id)
+      WHERE type = 'spend'
         AND is_internal_transfer = 0
         AND is_card_bill_payment = 0
         AND is_investment = 0
         ${baseWhere ? sql`AND ${baseWhere}` : sql``}
-      GROUP BY categoria, subcategoria
+      GROUP BY categories.name, categories.name
       ORDER BY total DESC
       LIMIT 50
     `)
 
-    return result.map((row: any) => ({
+    return result.rows.map((row: any) => ({
       categoria: row.categoria,
       subcategoria: row.subcategoria,
       qty: row.qty,
@@ -227,20 +216,20 @@ export class DashboardService {
     const baseWhere = await this.buildBaseConditions(filters)
 
     // Determinar agrupamento por período
-    let groupByExpression = 'data'
+    let groupByExpression = 'date'
     if (groupBy === 'week') {
-      groupByExpression = "strftime('%Y-%W', data)"
+      groupByExpression = "to_char(date::date, 'YYYY-WW'::text)"
     } else if (groupBy === 'month') {
-      groupByExpression = "strftime('%Y-%m', data)"
+      groupByExpression = "to_char(date::date, 'YYYY-MM'::text)"
     }
 
     // Entradas por período
-    const entradasResult = await db.all(sql`
+    const entradasResult = await db.execute(sql`
       SELECT 
         ${sql.raw(groupByExpression)} as period,
-        ROUND(SUM(valor), 2) as entradas
+        SUM(amount) as entradas
       FROM transactions
-      WHERE tipo = 'credito'
+      WHERE type = 'income'
         AND is_internal_transfer = 0
         ${baseWhere ? sql`AND ${baseWhere}` : sql``}
       GROUP BY ${sql.raw(groupByExpression)}
@@ -248,12 +237,12 @@ export class DashboardService {
     `)
 
     // Saídas por período
-    const saidasResult = await db.all(sql`
+    const saidasResult = await db.execute(sql`
       SELECT 
         ${sql.raw(groupByExpression)} as period,
-        ROUND(SUM(ABS(valor)), 2) as saidas
+        SUM(ABS(amount)) as saidas
       FROM transactions
-      WHERE tipo = 'debito'
+      WHERE type = 'spend'
         AND is_internal_transfer = 0
         AND is_card_bill_payment = 0
         AND is_investment = 0
@@ -265,11 +254,11 @@ export class DashboardService {
     // Combinar resultados por período
     const periodMap = new Map()
     
-    entradasResult.forEach((row: any) => {
+    entradasResult.rows.forEach((row: any) => {
       periodMap.set(row.period, { x: row.period, entradas: row.entradas || 0, saidas: 0 })
     })
     
-    saidasResult.forEach((row: any) => {
+    saidasResult.rows.forEach((row: any) => {
       const existing = periodMap.get(row.period)
       if (existing) {
         existing.saidas = row.saidas || 0
@@ -291,23 +280,25 @@ export class DashboardService {
     const baseWhere = await this.buildBaseConditions(filters)
 
     // Buscar top 10 subcategorias (apenas gastos de consumo)
-    const result = await db.all(sql`
+    const result = await db.execute(sql`
       SELECT 
-        COALESCE(subcategoria, '—') as subcategoria,
-        COALESCE(categoria, 'Sem categoria') as categoria,
-        ROUND(SUM(ABS(valor)), 2) as total
+        COALESCE(subcategories.name, '—') as subcategoria,
+        COALESCE(categories.name, 'Sem categoria') as categoria,
+        SUM(ABS(amount)) as total
       FROM transactions
-      WHERE tipo = 'debito'
+      inner join categories on transactions.category_id = categories.id
+      inner join categories as subcategories on transactions.subcategory_id = subcategories.id
+      WHERE type = 'spend'
         AND is_internal_transfer = 0
         AND is_card_bill_payment = 0
         AND is_investment = 0
         ${baseWhere ? sql`AND ${baseWhere}` : sql``}
-      GROUP BY subcategoria, categoria
+      GROUP BY subcategories.name, categories.name
       ORDER BY total DESC
       LIMIT 10
     `)
 
-    return result.map((row: any) => ({
+    return result.rows.map((row: any) => ({
       subcategoria: row.subcategoria,
       categoria: row.categoria,
       total: row.total

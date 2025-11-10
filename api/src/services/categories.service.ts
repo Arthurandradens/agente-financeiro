@@ -183,7 +183,7 @@ export class CategoriesService {
       WHERE category_id = ${id} OR subcategory_id = ${id}
     `)
 
-    if (transactions.rows[0].count > 0) {
+    if (Number(transactions.rows[0].count) > 0) {
       throw new Error('Não é possível excluir categoria que tem transações associadas')
     }
 

@@ -23,9 +23,10 @@ export const useDashboardStore = defineStore('dashboard', () => {
 
   // State para opções de filtro
   const filterOptions = ref({
-    categorias: [] as Array<{ id: number, name: string, parentId?: number }>,
-    subcategorias: [] as Array<{ id: number, name: string, parentId: number }>,
-    meiosPagamento: [] as Array<{ id: number, label: string, code: string }>
+    categorias: [] as Array<{ id: number, name: string, parentId?: number, kind: string }>,
+    subcategorias: [] as Array<{ id: number, name: string, parentId: number, kind: string }>,
+    meiosPagamento: [] as Array<{ id: number, label: string, code: string }>,
+    bancos: [] as Array<{ id: number, code: string, name: string }>
   })
 
   // Helper para converter filtros do frontend em parâmetros de API
@@ -65,18 +66,21 @@ export const useDashboardStore = defineStore('dashboard', () => {
   // Função para carregar opções de filtro
   const loadFilterOptions = async () => {
     try {
-      const [categories, paymentMethods] = await Promise.all([
+      const [categories, paymentMethods, banks] = await Promise.all([
         api.getCategories(),
-        api.getPaymentMethods()
+        api.getPaymentMethods(),
+        api.getBanks()
       ])
       
       // Separar categorias e subcategorias
       const categoriesData = categories as any
       const paymentMethodsData = paymentMethods as any
+      const banksData = banks as any
       
       filterOptions.value.categorias = categoriesData.items.filter((c: any) => !c.parentId)
       filterOptions.value.subcategorias = categoriesData.items.filter((c: any) => c.parentId)
       filterOptions.value.meiosPagamento = paymentMethodsData.items || paymentMethodsData
+      filterOptions.value.bancos = banksData.items || banksData
     } catch (error) {
       console.error('Erro ao carregar opções de filtro:', error)
     }
@@ -145,7 +149,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const eligibleExpenses = computed(() => {
     // Se usando API, dados já vêm filtrados do backend
     if (useApi.value) {
-      return filteredTransactions.value.filter(t => t.tipo === 'debito')
+      return filteredTransactions.value.filter(t => t.type === 'spend')
     }
     
     // Caso contrário (modo Excel), aplicar filtros locais
@@ -172,7 +176,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const eligibleIncomes = computed(() => {
     // Se usando API, dados já vêm filtrados do backend
     if (useApi.value) {
-      return filteredTransactions.value.filter(t => t.tipo === 'credito')
+      return filteredTransactions.value.filter(t => t.type === 'income')
     }
     
     // Caso contrário (modo Excel), aplicar filtros locais
@@ -537,6 +541,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
         pageSize: 100 // Buscar até 100 transações por vez
       })
 
+      console.log('transactionsResult', transactionsResult)
+
       // Buscar dados agregados do dashboard
       const [overview, byCategory, series, topSubcategories] = await Promise.all([
         api.getOverview({ userId: 1 }),
@@ -665,6 +671,52 @@ export const useDashboardStore = defineStore('dashboard', () => {
       clearData()
     }
   }
+
+  // CRUD Actions
+  const createTransaction = async (data: any) => {
+    if (!useApi.value) {
+      throw new Error('Modo API não está ativo')
+    }
+
+    try {
+      await api.createTransaction(data)
+      // Recarregar dados após criar
+      await fetchFromApi()
+    } catch (error: any) {
+      console.error('Erro ao criar transação:', error)
+      throw error
+    }
+  }
+
+  const updateTransaction = async (id: number, data: any) => {
+    if (!useApi.value) {
+      throw new Error('Modo API não está ativo')
+    }
+
+    try {
+      await api.updateTransaction(id, data)
+      // Recarregar dados após atualizar
+      await fetchFromApi()
+    } catch (error: any) {
+      console.error('Erro ao atualizar transação:', error)
+      throw error
+    }
+  }
+
+  const deleteTransaction = async (id: number) => {
+    if (!useApi.value) {
+      throw new Error('Modo API não está ativo')
+    }
+
+    try {
+      await api.deleteTransaction(id)
+      // Recarregar dados após excluir
+      await fetchFromApi()
+    } catch (error: any) {
+      console.error('Erro ao excluir transação:', error)
+      throw error
+    }
+  }
   
   return {
     // State
@@ -710,6 +762,11 @@ export const useDashboardStore = defineStore('dashboard', () => {
     
     // Filter options
     filterOptions,
-    loadFilterOptions
+    loadFilterOptions,
+    
+    // CRUD Actions
+    createTransaction,
+    updateTransaction,
+    deleteTransaction
   }
 })

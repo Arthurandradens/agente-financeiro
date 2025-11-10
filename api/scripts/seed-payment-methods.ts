@@ -1,25 +1,13 @@
-import { drizzle } from 'drizzle-orm/better-sqlite3'
-import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres'
-import Database from 'better-sqlite3'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
-import { paymentMethods } from '../src/schema/payment-methods'
+import { paymentMethods } from '../src/schema/pg/payment-methods'
 import { config } from '../src/config/env'
 
-// Configurar conexão com banco
-let db: any
-let pool: Pool | null = null
-
-if (config.DB_VENDOR === 'sqlite') {
-  const sqlite = new Database('./data/app.db')
-  db = drizzle(sqlite)
-} else if (config.DB_VENDOR === 'postgresql') {
-  pool = new Pool({
-    connectionString: config.DATABASE_URL
-  })
-  db = drizzlePg(pool)
-} else {
-  throw new Error(`Unsupported DB_VENDOR: ${config.DB_VENDOR}`)
-}
+// Configurar conexão com banco PostgreSQL
+const pool = new Pool({
+  connectionString: config.DATABASE_URL
+})
+const db = drizzle(pool)
 
 const paymentMethodsData = [
   {
@@ -103,11 +91,7 @@ async function seedPaymentMethods() {
     console.error('❌ Erro no seed:', error)
     process.exit(1)
   } finally {
-    if (config.DB_VENDOR === 'sqlite') {
-      // SQLite não precisa fechar explicitamente aqui
-    } else if (config.DB_VENDOR === 'postgresql' && pool) {
-      await pool.end()
-    }
+    await pool.end()
   }
 }
 

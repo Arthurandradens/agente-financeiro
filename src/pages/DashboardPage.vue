@@ -125,9 +125,21 @@
         </div>
         
         <!-- Transactions table -->
-        <TransactionsTable />
+        <TransactionsTable @edit="handleEditTransaction" />
       </div>
     </main>
+
+    <!-- Floating Add Button -->
+    <FloatingAddButton @click="handleAddTransaction" />
+
+    <!-- Transaction Modal -->
+    <TransactionModal
+      v-if="showTransactionModal"
+      :visible="showTransactionModal"
+      :editing-transaction="editingTransaction"
+      @close="handleCloseModal"
+      @saved="handleTransactionSaved"
+    />
 
     <!-- Upload modal -->
     <div
@@ -154,6 +166,9 @@
     
     <!-- Toast para notificações -->
     <Toast />
+    
+    <!-- Confirm Dialog para exclusões -->
+    <ConfirmDialog />
   </div>
 </template>
 
@@ -169,6 +184,8 @@ import ChartSubcategoryBar from '@/components/ChartSubcategoryBar.vue'
 import ChartTrendLine from '@/components/ChartTrendLine.vue'
 import TransactionsTable from '@/components/TransactionsTable.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import FloatingAddButton from '@/components/FloatingAddButton.vue'
+import TransactionModal from '@/components/TransactionModal.vue'
 // Componentes PrimeVue registrados globalmente
 // import exampleData from '../exemplo-dados.json'
 
@@ -176,6 +193,10 @@ const store = useDashboardStore()
 const showUpload = ref(false)
 const isDark = ref(false)
 const apiAvailable = ref(false)
+
+// Transaction modal state
+const showTransactionModal = ref(false)
+const editingTransaction = ref<any>(null)
 
 const hasData = computed(() => store.hasData)
 const loading = computed(() => store.loading)
@@ -187,6 +208,27 @@ const toggleDarkMode = () => {
   isDark.value = !isDark.value
   document.documentElement.classList.toggle('dark', isDark.value)
   localStorage.setItem('darkMode', isDark.value.toString())
+}
+
+// Transaction modal methods
+const handleAddTransaction = () => {
+  editingTransaction.value = null
+  showTransactionModal.value = true
+}
+
+const handleEditTransaction = (transaction: any) => {
+  editingTransaction.value = transaction
+  showTransactionModal.value = true
+}
+
+const handleCloseModal = () => {
+  showTransactionModal.value = false
+  editingTransaction.value = null
+}
+
+const handleTransactionSaved = () => {
+  showTransactionModal.value = false
+  editingTransaction.value = null
 }
 
 

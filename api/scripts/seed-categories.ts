@@ -1,11 +1,14 @@
-import { drizzle } from 'drizzle-orm/better-sqlite3'
-import Database from 'better-sqlite3'
+import { drizzle } from 'drizzle-orm/node-postgres'
+import { Pool } from 'pg'
 import { categories, transactions } from '../src/schema/index'
 import { sql } from 'drizzle-orm'
+import { config } from '../src/config/env'
 
-// Conectar ao banco
-const sqlite = new Database('./data/app.db')
-const db = drizzle(sqlite)
+// Conectar ao banco PostgreSQL
+const pool = new Pool({
+  connectionString: config.DATABASE_URL
+})
+const db = drizzle(pool)
 
 interface CategoryData {
   name: string
@@ -160,7 +163,7 @@ async function seedCategories() {
     console.error('❌ Erro durante seed de categorias:', error)
     throw error
   } finally {
-    sqlite.close()
+    await pool.end()
   }
 }
 

@@ -4,18 +4,17 @@
 
 Receber transações brutas (JSON) e devolver a mesma lista com:
 
-- **valor** (nunca altere o sinal; copie o que veio)
-- **tipo** = 'credito' (valor > 0) ou 'debito' (valor < 0)
+- **amount** (nunca altere o sinal; copie o que veio)
+- **type** = 'income' (valor > 0) ou 'spend' (valor < 0)
 - **IDs**: category_id, subcategory_id (números, conforme catálogo)
-- **Campos úteis**: counterparty_normalized, cnpj, meio_pagamento
-- **Flags**: is_internal_transfer, is_card_bill_payment, is_investment_aporte, is_investment_rendimento, is_refund_or_chargeback
+- **Campos úteis**: counterparty_normalized, payment_method, payment_method_id
+- **Flags**: is_internal_transfer, is_card_bill_payment, is_investment_aporte, is_investment_rendimento
 - **movement_kind** = 'spend' | 'income' | 'transfer' | 'invest' | 'fee'
-- **Observações** e confianca_classificacao
 
 ## Regras obrigatórias
 
-1. **Não mude valor**. Copie do input.
-2. **Se valor > 0 ⇒ tipo='credito'; se < 0 ⇒ tipo='debito'**.
+1. **Não mude amount**. Copie do input.
+2. **Se amount > 0 ⇒ type='income'; se < 0 ⇒ type='spend'**.
 3. **Não use absoluto em nenhum momento**.
 
 4. **Transferência interna (para si mesmo)**:
@@ -33,13 +32,15 @@ Receber transações brutas (JSON) e devolver a mesma lista com:
 
 7. **Casos pessoais (regras do usuário) têm prioridade máxima** (mapas explícitos de CNPJ/nome/conta → categoria/subcategoria IDs).
 
-8. **Categorias**: use apenas os IDs fornecidos no catálogo (não invente IDs). Retorne também categoria_label/subcategoria_label (texto) para conferência humana, mas o que vale é o ID.
+8. **Categorias**: use apenas os IDs fornecidos no catálogo (não invente IDs). Retorne também category_label/subcategory_label (texto) para conferência humana, mas o que vale é o ID.
+
+9. **Payment Method Mapping**: Para cada transação, mapeie o campo `payment_method` (texto) para o `payment_method_id` correspondente usando o catálogo de payment_methods fornecido nas regras. Use o campo `code` para fazer o mapeamento correto.
 
 ## Campos obrigatórios
 
-- **Preencha counterparty_normalized** (estabelecimento/favorecido limpo) e cnpj se houver.
-- **meio_pagamento**: um de PIX|TED|DOC|TEF|BOLETO|CARTAO_DEBITO|CARTAO_CREDITO|SAQUE|TARIFA|OUTRO.
-- **confianca_classificacao** 0–1 e uma breve observacoes (regras acionadas).
+- **Preencha counterparty_normalized** (estabelecimento/favorecido limpo).
+- **payment_method**: um de PIX|TED|DOC|TEF|BOLETO|CARTAO_DEBITO|CARTAO_CREDITO|SAQUE|TARIFA|OUTRO.
+- **payment_method_id**: ID numérico correspondente ao payment_method usando o catálogo fornecido.
 
 ## Taxonomia (referência)
 

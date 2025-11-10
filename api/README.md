@@ -7,7 +7,7 @@ Backend Fastify para ingestão e consulta de transações bancárias categorizad
 - **Runtime**: Node 20+
 - **Server**: Fastify
 - **ORM**: Drizzle ORM
-- **Database**: SQLite (dev) / PostgreSQL (prod)
+- **Database**: PostgreSQL
 - **Validation**: Zod
 - **Auth**: API Key simples
 - **Testing**: Vitest
@@ -41,20 +41,26 @@ cp .env.example .env
 ### 3. Configurar banco de dados
 
 ```bash
-# Criar diretório para SQLite
-mkdir -p data
+# Configurar PostgreSQL
+npm run setup:postgres
 
 # Gerar e aplicar migrações
 npm run db:push
 
-# Popular categorias a partir das transações existentes
+# Popular dados iniciais
 npm run seed:categories
+npm run seed:payment-methods
+npm run seed:banks
 
 # Preencher categoryId/subcategoryId e flags nas transações
 npm run backfill:transactions
+npm run backfill:payment-methods
 
 # Criar VIEW para cálculos efetivos
 npm run create:view
+
+# Ou executar setup completo
+npm run setup:db
 ```
 
 ### 4. Executar
@@ -235,8 +241,8 @@ PORT=8080
 NODE_ENV=development
 FRONTEND_ORIGIN=http://localhost:5173
 API_KEY=changeme
-DB_VENDOR=sqlite
-DATABASE_URL=
+DB_VENDOR=postgresql
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/finance_db
 LOG_LEVEL=info
 ```
 
@@ -265,11 +271,14 @@ Configure as variáveis:
 - `API_BASE_URL` - URL da API (default: http://localhost:8080)
 - `API_KEY` - Chave de autenticação
 
-## Migração SQLite → PostgreSQL
+## Configuração do Banco
 
-1. Alterar `DB_VENDOR=postgres` no `.env`
-2. Configurar `DATABASE_URL` com string de conexão
-3. Executar `npm run db:push`
+O projeto utiliza PostgreSQL como banco de dados principal. Para configurar:
+
+1. Instalar PostgreSQL localmente
+2. Criar banco `finance_db`
+3. Configurar variáveis de ambiente
+4. Executar `npm run setup:db`
 
 ## Normalização de Métodos de Pagamento
 

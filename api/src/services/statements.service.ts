@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { statements, transactions, users, paymentMethods, banks } from '../schema/index'
-import { generateHashId } from '../utils/hash'
+// import { generateHashId } from '../utils/hash' // Removed unused import
 import type { FastifyInstance } from 'fastify'
 
 export interface IngestResult {
@@ -37,60 +37,51 @@ export class StatementsService {
       if (!bank.length) {
         throw new Error(`Invalid bank_id: ${bankId}`)
       }
-      bankName = bank[0].name
+      bankName = bank[0]?.name || null
     }
 
     // Criar statement
     const [statement] = await db.insert(statements).values({
-      userId,
-      periodStart,
-      periodEnd,
-      sourceFile
+      user_id: userId,
+      period_start: periodStart,
+      period_end: periodEnd,
+      source_file: sourceFile
     }).returning()
 
     let inserted = 0
     let duplicates = 0
 
-    // Inserir transações com upsert por id_transacao
+    // Inserir transações
     for (const tx of transacoes) {
-      const hashId = tx.id_transacao || generateHashId(tx.data, tx.valor, tx.descricao_original)
-      
-      // Processar payment_method_id e preencher meio_pagamento
-      let meioPagamento = tx.meio_pagamento
+      // Processar payment_method_id e preencher payment_method
+      let paymentMethod = tx.payment_method
       if (tx.payment_method_id) {
         // Validar que o payment_method_id existe
         const pm = await db.select().from(paymentMethods).where(eq(paymentMethods.id, tx.payment_method_id)).limit(1)
         if (!pm.length) {
           throw new Error(`Invalid payment_method_id: ${tx.payment_method_id}`)
         }
-        // Preencher meio_pagamento automaticamente com o label
-        meioPagamento = pm[0].label
+        // Preencher payment_method automaticamente com o label
+        paymentMethod = pm[0]?.label || ''
       }
       
       try {
         await db.insert(transactions).values({
-          statementId: statement.id,
-          data: tx.data,
-          descricaoOriginal: tx.descricao_original,
-          estabelecimento: tx.counterparty_normalized || '',
-          cnpj: tx.cnpj,
-          tipo: tx.tipo,
-          valor: tx.valor,
-          categoria: tx.categoria_label || '', // DEPRECATED - manter para compatibilidade
-          subcategoria: tx.subcategoria_label || '', // DEPRECATED - manter para compatibilidade
-          categoryId: tx.category_id,
-          subcategoryId: tx.subcategory_id,
-          isInternalTransfer: tx.is_internal_transfer || 0,
-          isCardBillPayment: tx.is_card_bill_payment || 0,
-          isInvestment: (tx.is_investment_aporte || 0) || (tx.is_investment_rendimento || 0) ? 1 : 0, // qualquer flag de investimento
-          isRefundOrChargeback: tx.is_refund_or_chargeback || 0,
-          paymentMethodId: tx.payment_method_id,
-          meioPagamento: meioPagamento,
-          bankId: bankId,
-          bancoOrigem: bankName, // DEPRECATED - manter para compatibilidade
-          observacoes: tx.observacoes,
-          confiancaClassificacao: tx.confianca_classificacao,
-          idTransacao: hashId
+          statement_id: statement?.id || null,
+          date: tx.date,
+          description: tx.description,
+          merchant: tx.counterparty_normalized || null,
+          type: tx.type, // já vem como 'income' ou 'spend'
+          amount: tx.amount,
+          category_id: tx.category_id,
+          subcategory_id: tx.subcategory_id,
+          is_internal_transfer: tx.is_internal_transfer || 0,
+          is_card_bill_payment: tx.is_card_bill_payment || 0,
+          is_investment: (tx.is_investment_aporte || 0) || (tx.is_investment_rendimento || 0) ? 1 : 0, // qualquer flag de investimento
+          payment_method_id: tx.payment_method_id,
+          payment_method: paymentMethod, // deprecated mas mantido
+          bank_id: bankId || null,
+          bank_name: bankName // deprecated mas mantido
         })
         inserted++
       } catch (error: any) {
@@ -104,7 +95,7 @@ export class StatementsService {
     }
 
     return {
-      statementId: statement.id,
+      statementId: statement?.id || 0,
       inserted,
       duplicates
     }
