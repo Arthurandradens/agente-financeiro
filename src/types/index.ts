@@ -1,4 +1,5 @@
 export interface Transaction {
+  id?: number
   date: string
   description: string
   merchant: string
@@ -19,6 +20,7 @@ export interface Transaction {
   expense_effective?: number
   income_effective?: number
   payment_method: string
+  payment_method_id?: number
   bank_id?: number
 }
 

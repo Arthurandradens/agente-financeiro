@@ -55,10 +55,16 @@ const transactionsRoute: FastifyPluginAsync = async (fastify) => {
                   amount: { type: 'number' },
                   category: { type: 'string' },
                   subcategory: { type: 'string' },
+                  category_id: { type: ['number', 'null'] },
+                  subcategory_id: { type: ['number', 'null'] },
                   payment_method: { type: 'string' },
                   payment_method_id: { type: ['number', 'null'] },
                   paymentCode: { type: ['string', 'null'] },
                   paymentLabel: { type: ['string', 'null'] },
+                  bank_id: { type: ['number', 'null'] },
+                  bank_name: { type: ['string', 'null'] },
+                  bankCode: { type: ['string', 'null'] },
+                  bankName: { type: ['string', 'null'] },
                   is_internal_transfer: { type: 'number' },
                   is_card_bill_payment: { type: 'number' },
                   is_investment: { type: 'number' }
@@ -276,7 +282,7 @@ const transactionsRoute: FastifyPluginAsync = async (fastify) => {
       if (data.amount !== undefined) updateData.amount = data.amount
       if (data.type !== undefined) updateData.type = data.type
       if (data.category_id !== undefined) updateData.category_id = data.category_id
-      if (data.subcategory_id !== undefined) updateData.subcategory_id = data.subcategory_id
+      if (data.subcategory_id !== null) updateData.subcategory_id = data.subcategory_id
       if (data.payment_method_id !== undefined) updateData.payment_method_id = data.payment_method_id
       if (data.bank_id !== undefined) updateData.bank_id = data.bank_id
       if (data.description !== undefined) updateData.description = data.description
@@ -303,7 +309,7 @@ const transactionsRoute: FastifyPluginAsync = async (fastify) => {
         bank_name: updatedTransaction[0].bank_name
       }
     } catch (error) {
-      fastify.log.error('Erro ao editar transação:')
+      fastify.log.error('Erro ao editar transação:' + error.message)
       if (error instanceof HttpError) {
         throw error
       }

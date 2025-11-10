@@ -47,3 +47,6 @@ out/
 # Temporary files
 *.tmp
 *.temp
+
+*.csv
+*.xlsx

@@ -110,7 +110,7 @@
                 icon="pi pi-pencil"
                 severity="info"
                 size="small"
-                @click="$emit('edit', data)"
+                @click="handleEdit(data)"
                 v-tooltip.top="'Editar'"
                 class="!p-2"
               />
@@ -157,9 +157,13 @@ console.log('filteredTransactions', filteredTransactions.value)
 console.log('Primeira transação:', filteredTransactions.value[0])
 
 // Emits
-defineEmits<{
+const emit = defineEmits<{
   edit: [transaction: any]
 }>()
+
+const handleEdit = (transaction: any) => {
+  emit('edit', transaction)
+}
 
 const confirmDelete = (transaction: any) => {
   if (confirm) {
@@ -201,10 +205,10 @@ const exportCSV = () => {
       `"${t.merchant}"`,
       t.type === 'income' ? 'Entrada' : 'Saída',
       t.type === 'income' ? t.amount : -Math.abs(t.amount),
-      `"${t.categoria}"`,
-      `"${t.subcategoria || ''}"`,
-      `"${t.meio_pagamento || ''}"`,
-      Math.round(t.confianca_classificacao * 100)
+      `"${t.category}"`,
+      `"${t.subcategory || ''}"`,
+      `"${t.payment_method || ''}"`,
+      Math.round((t as any).confianca_classificacao * 100)
     ].join(','))
   ].join('\n')
   

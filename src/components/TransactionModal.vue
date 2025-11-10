@@ -193,8 +193,14 @@ const store = useDashboardStore()
 const loading = ref(false)
 
 // Form data
+const today = new Date()
+const year = today.getFullYear()
+const month = String(today.getMonth() + 1).padStart(2, '0')
+const day = String(today.getDate()).padStart(2, '0')
+const todayString = `${year}-${month}-${day}`
+
 const form = ref<TransactionCreateDTO>({
-  date: new Date().toISOString().split('T')[0],
+  date: todayString,
   amount: 0,
   type: 'spend',
   category_id: 0,
@@ -209,13 +215,17 @@ const form = ref<TransactionCreateDTO>({
 const calendarDate = computed({
   get: () => {
     if (!form.value.date) return null
-    // Converter string ISO para Date object
-    return new Date(form.value.date)
+    // Converter string ISO para Date object, ajustando timezone
+    const date = new Date(form.value.date + 'T00:00:00')
+    return date
   },
   set: (value: Date | null) => {
     if (value) {
-      // Converter Date object para string ISO
-      form.value.date = value.toISOString().split('T')[0]
+      // Converter Date object para string ISO, ajustando timezone
+      const year = value.getFullYear()
+      const month = String(value.getMonth() + 1).padStart(2, '0')
+      const day = String(value.getDate()).padStart(2, '0')
+      form.value.date = `${year}-${month}-${day}`
     }
   }
 })
@@ -253,8 +263,15 @@ const availableSubcategories = computed(() => {
 
 // Methods
 const resetForm = () => {
+  // Corrigir problema de timezone para data atual
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  const todayString = `${year}-${month}-${day}`
+  
   form.value = {
-    date: new Date().toISOString().split('T')[0],
+    date: todayString,
     amount: 0,
     type: 'spend',
     category_id: 0,
@@ -323,30 +340,41 @@ const handleSubmit = async () => {
 // Watchers
 watch(() => props.visible, (newVisible) => {
   if (newVisible && props.editingTransaction) {
-    console.log('🔍 Editando transação:', props.editingTransaction)
     // Preencher formulário com dados da transação
-      form.value = {
-        date: props.editingTransaction.date || new Date().toISOString().split('T')[0],
-        amount: props.editingTransaction.amount || 0,
-        type: props.editingTransaction.type || 'spend',
-        category_id: props.editingTransaction.category_id || 0,
-        subcategory_id: props.editingTransaction.subcategory_id,
-        payment_method_id: props.editingTransaction.payment_method_id || 0,
-        bank_id: props.editingTransaction.bank_id || 0,
-        description: props.editingTransaction.description || '',
-        merchant: props.editingTransaction.merchant || ''
-      }
-    console.log('📝 Form preenchido:', form.value)
+    form.value = {
+      date: props.editingTransaction.date || todayString,
+      amount: props.editingTransaction.amount || 0,
+      type: props.editingTransaction.type || 'spend',
+      category_id: props.editingTransaction.category_id || 0,
+      subcategory_id: props.editingTransaction.subcategory_id,
+      payment_method_id: props.editingTransaction.payment_method_id || 0,
+      bank_id: props.editingTransaction.bank_id || 0,
+      description: props.editingTransaction.description || '',
+      merchant: props.editingTransaction.merchant || ''
+    }
   } else if (newVisible && !props.editingTransaction) {
+    resetForm()
+  } else if (!newVisible) {
     resetForm()
   }
 })
 
-watch(() => props.visible, (newVisible) => {
-  if (!newVisible) {
-    resetForm()
+// Watcher específico para editingTransaction
+watch(() => props.editingTransaction, (newTransaction) => {
+  if (newTransaction && props.visible) {
+    form.value = {
+      date: newTransaction.date || todayString,
+      amount: newTransaction.amount || 0,
+      type: newTransaction.type || 'spend',
+      category_id: newTransaction.category_id || 0,
+      subcategory_id: newTransaction.subcategory_id,
+      payment_method_id: newTransaction.payment_method_id || 0,
+      bank_id: newTransaction.bank_id || 0,
+      description: newTransaction.description || '',
+      merchant: newTransaction.merchant || ''
+    }
   }
-})
+}, { immediate: true })
 
 watch(() => form.value.type, () => {
   // Limpar categoria e subcategoria ao trocar tipo

@@ -1,5 +1,5 @@
 // Cliente HTTP para consumir a API do backend
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8080'
 const API_KEY = import.meta.env.VITE_API_KEY || 'changeme'
 
 
