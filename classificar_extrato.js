@@ -38,13 +38,21 @@ function parseDateNubankToISO(dateStr) {
   const [, d, mth, y] = m;
   return `${y}-${mth}-${d}`;
 }
+function parseDateBradescoToISO(dateStr) {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(dateStr).trim());
+  if (!m) return null;
+  const [, d, mth, y] = m;
+  return `${y}-${mth}-${d}`;
+}
 function detectCSVFormat(raw) {
   if (raw.includes('RELEASE_DATE;TRANSACTION_TYPE')) {
     return 'mercadopago';
   } else if (raw.includes('Data,Valor,Identificador,Descrição')) {
     return 'nubank';
+  } else if (raw.includes('Data;Histórico;Docto.;Crédito (R$);Débito (R$);Saldo (R$)')) {
+    return 'bradesco';
   }
-  throw new Error('Formato de CSV não reconhecido. Formatos suportados: Mercado Pago, Nubank');
+  throw new Error('Formato de CSV não reconhecido. Formatos suportados: Mercado Pago, Nubank, Bradesco');
 }
 
 function detectHeaderIndex(lines) {
@@ -116,6 +124,93 @@ function parseCSVNubank(raw) {
       REFERENCE_ID: identificador,
       TRANSACTION_NET_AMOUNT: valorNum
     });
+  }
+  
+  return items;
+}
+function parseCSVBradesco(raw) {
+  // normaliza quebras
+  const content = raw.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = content.split('\n');
+  
+  const items = [];
+  const headerPattern = /^Data;Histórico;Docto\.;Crédito \(R\$\);Débito \(R\$\);Saldo \(R\$\)/i;
+  
+  // Encontrar todas as linhas de cabeçalho
+  const headerIndices = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (headerPattern.test(lines[i])) {
+      headerIndices.push(i);
+    }
+  }
+  
+  if (headerIndices.length === 0) {
+    throw new Error('Cabeçalho de transações não encontrado (linha com Data;Histórico;Docto...).');
+  }
+  
+  // Processar cada seção de transações
+  for (const headerIdx of headerIndices) {
+    const dataLines = lines.slice(headerIdx + 1);
+    
+    for (const line of dataLines) {
+      const trimmed = line.trim();
+      
+      // Parar se encontrar outro cabeçalho ou linha de total
+      if (headerPattern.test(trimmed) || trimmed.startsWith(';;Total;')) {
+        break;
+      }
+      
+      // Ignorar linhas vazias, metadados e linhas que não começam com data
+      if (!trimmed || trimmed.startsWith('Extrato de:') || trimmed.startsWith('Filtro de resultados') || 
+          trimmed.startsWith('Os dados acima') || trimmed.startsWith('Últimos Lancamentos') ||
+          !/^\d{2}\/\d{2}\/\d{4}/.test(trimmed)) {
+        continue;
+      }
+      
+      const cols = trimmed.split(';');
+      if (cols.length < 6) continue;
+      
+      const [data, historico, docto, credito, debito, saldo] = cols;
+      
+      // Validar que a primeira coluna é uma data
+      if (!/^\d{2}\/\d{2}\/\d{4}$/.test(data.trim())) {
+        continue;
+      }
+      
+      // Converter valores
+      const valorCredito = parseMoneyBR(credito);
+      const valorDebito = parseMoneyBR(debito);
+      
+      // Determinar valor final: se tem crédito, é positivo; se tem débito, é negativo
+      let valor = null;
+      let tipo = null;
+      
+      if (valorCredito !== null && valorCredito !== 0) {
+        valor = valorCredito;
+        tipo = 'income';
+      } else if (valorDebito !== null && valorDebito !== 0) {
+        valor = -Math.abs(valorDebito); // garantir negativo
+        tipo = 'spend';
+      } else {
+        // Se ambos estão vazios ou zero, pular
+        continue;
+      }
+      
+      const dateISO = parseDateBradescoToISO(data);
+      if (!dateISO) continue;
+      
+      items.push({
+        date: dateISO,
+        description: historico?.trim() || '',
+        amount: valor,
+        tipo: tipo,
+        RELEASE_DATE: dateISO,
+        TRANSACTION_TYPE: historico?.trim() || '',
+        REFERENCE_ID: docto?.trim() || '',
+        TRANSACTION_NET_AMOUNT: valor,
+        PARTIAL_BALANCE: parseMoneyBR(saldo)
+      });
+    }
   }
   
   return items;
@@ -346,13 +441,20 @@ async function main() {
   let BANK_ID;
   try {
     format = detectCSVFormat(raw);
-    console.log(`📄 Formato detectado: ${format === 'mercadopago' ? 'Mercado Pago' : 'Nubank'}`);
+    const formatNames = {
+      'mercadopago': 'Mercado Pago',
+      'nubank': 'Nubank',
+      'bradesco': 'Bradesco'
+    };
+    console.log(`📄 Formato detectado: ${formatNames[format] || format}`);
     
     // Mapear formato para bank_id
     if (format === 'mercadopago') {
       BANK_ID = 10; // Mercado Pago
     } else if (format === 'nubank') {
       BANK_ID = 6; // Nubank
+    } else if (format === 'bradesco') {
+      BANK_ID = 2; // Bradesco
     }
     console.log(`🏦 Bank ID: ${BANK_ID}`);
   } catch (error) {
@@ -366,6 +468,8 @@ async function main() {
     transacoes = parseCSVLikeNubankTabs(raw);
   } else if (format === 'nubank') {
     transacoes = parseCSVNubank(raw);
+  } else if (format === 'bradesco') {
+    transacoes = parseCSVBradesco(raw);
   }
   
   if (!transacoes || !transacoes.length) {
