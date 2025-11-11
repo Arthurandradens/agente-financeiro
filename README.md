@@ -5,6 +5,7 @@ Sistema completo para classificação automática e análise de extratos bancár
 ## 🚀 Funcionalidades
 
 ### Backend API
+
 - **Ingestão de transações**: Recebe extratos classificados e armazena no banco de dados
 - **Dashboard endpoints**: KPIs, gráficos por categoria, séries temporais
 - **Filtros avançados**: Por período, categoria, subcategoria, meio de pagamento, busca textual
@@ -12,6 +13,7 @@ Sistema completo para classificação automática e análise de extratos bancár
 - **Exclusões automáticas**: Transferências internas e pagamentos de fatura não contam como gastos
 
 ### Frontend Dashboard
+
 - **Visualização interativa**: Gráficos de pizza, barras e linha temporal
 - **KPIs em tempo real**: Entradas, saídas, saldo e tarifas
 - **Tabela de transações**: Com paginação, ordenação e filtros
@@ -20,6 +22,7 @@ Sistema completo para classificação automática e análise de extratos bancár
 - **Responsivo**: Interface adaptável para mobile e desktop
 
 ### Script de Classificação
+
 - **Classificação automática**: Utiliza OpenAI GPT para categorizar transações
 - **Suporte a múltiplos formatos**: Mercado Pago e Nubank
 - **Regras personalizáveis**: Sistema de regras baseado em JSON
@@ -28,12 +31,14 @@ Sistema completo para classificação automática e análise de extratos bancár
 ## 📋 Pré-requisitos
 
 ### Software Necessário
+
 - **Node.js** 18+ ([Download](https://nodejs.org/))
 - **npm** ou **yarn** (vem com Node.js)
 - **PostgreSQL** 15+ ([Download](https://www.postgresql.org/download/))
 - **Git** ([Download](https://git-scm.com/downloads))
 
 ### Conta OpenAI (para classificação)
+
 - Conta na OpenAI com API Key
 - Créditos disponíveis para uso da API
 
@@ -47,6 +52,7 @@ Sistema completo para classificação automática e análise de extratos bancár
    - Linux: `sudo apt-get install postgresql-15`
 
 2. **Criar banco de dados**:
+
 ```bash
 # Conectar ao PostgreSQL
 psql -U postgres
@@ -74,6 +80,7 @@ docker-compose up -d postgres
 ```
 
 Isso criará um container PostgreSQL com:
+
 - **Banco**: `finance_db`
 - **Usuário**: `postgres`
 - **Senha**: `postgres`
@@ -155,6 +162,7 @@ API_KEY=changeme
 ```
 
 **Como obter a chave da OpenAI**:
+
 1. Acesse [OpenAI Platform](https://platform.openai.com/)
 2. Faça login ou crie uma conta
 3. Vá em "API Keys" no menu
@@ -173,6 +181,7 @@ npm run setup:db
 ```
 
 Este comando irá:
+
 - Criar todas as tabelas (migrações)
 - Popular categorias iniciais
 - Popular métodos de pagamento
@@ -180,6 +189,7 @@ Este comando irá:
 - Popular bancos cadastrados
 
 **Alternativa passo a passo**:
+
 ```bash
 # Gerar e aplicar migrações
 npm run db:push
@@ -200,6 +210,7 @@ npm run dev
 O servidor estará rodando em `http://localhost:8080`
 
 **Verificar se está funcionando**:
+
 ```bash
 curl http://localhost:8080/health
 ```
@@ -354,6 +365,7 @@ Informações para detectar transferências internas:
 - **cpf_cnpj**: Lista de CPFs/CNPJs próprios
 
 **Exemplo**:
+
 ```json
 "self_identifiers": {
   "names": ["João Silva", "João da Silva"],
@@ -378,6 +390,7 @@ Regras específicas que têm **prioridade máxima** sobre a classificação auto
 - **reason**: Descrição da regra (para documentação)
 
 **Exemplo de regra**:
+
 ```json
 {
   "match": {
@@ -507,25 +520,30 @@ npm run preview          # Preview da build
 ## 📡 Endpoints da API
 
 ### Health
+
 - `GET /health` - Status da API
 
 ### Dashboard
+
 - `GET /dash/overview` - KPIs gerais (entradas, saídas, saldo, tarifas)
 - `GET /dash/by-category` - Gastos por categoria (para gráfico pizza)
 - `GET /dash/series` - Séries temporais (para gráfico de linha)
 - `GET /dash/top-subcategories` - Top 10 subcategorias (para gráfico barras)
 
 ### Transações
+
 - `GET /transactions` - Listar transações (com filtros e paginação)
 - `POST /transactions` - Criar transação manual
 - `PATCH /transactions/:id` - Atualizar transação
 - `DELETE /transactions/:id` - Excluir transação
 
 ### Statements (Extratos)
+
 - `POST /statements/ingest` - Ingerir extrato classificado
 - `GET /statements/:id` - Buscar extrato por ID
 
 ### Categorias
+
 - `GET /categories` - Listar todas as categorias
 - `GET /categories/hierarchy` - Listar em hierarquia
 - `GET /categories/:id` - Buscar por ID
@@ -534,9 +552,11 @@ npm run preview          # Preview da build
 - `DELETE /categories/:id` - Excluir categoria
 
 ### Métodos de Pagamento
+
 - `GET /payment-methods` - Listar todos os métodos
 
 ### Documentação
+
 - `GET /docs` - Documentação Swagger da API
 
 ## 🐛 Solução de Problemas
@@ -546,7 +566,9 @@ npm run preview          # Preview da build
 **Problema**: `Error: connect ECONNREFUSED 127.0.0.1:5432`
 
 **Soluções**:
+
 1. Verifique se o PostgreSQL está rodando:
+
    ```bash
    # Windows
    services.msc  # Procurar por PostgreSQL
@@ -556,6 +578,7 @@ npm run preview          # Preview da build
    ```
 
 2. Verifique as credenciais no `.env`:
+
    ```env
    DATABASE_URL=postgresql://usuario:senha@localhost:5432/finance_db
    ```
@@ -570,6 +593,7 @@ npm run preview          # Preview da build
 **Problema**: `Error: relation "categories" already exists`
 
 **Solução**: Limpe o banco e recrie:
+
 ```bash
 cd api
 npm run db:clean
@@ -581,6 +605,7 @@ npm run setup:db
 **Problema**: Erro `Failed to fetch` no console
 
 **Soluções**:
+
 1. Verifique se o backend está rodando em `http://localhost:8080`
 2. Verifique a variável `VITE_API_BASE_URL` no `.env`
 3. Verifique o CORS no backend (deve incluir `http://localhost:5173`)
@@ -589,7 +614,8 @@ npm run setup:db
 
 **Problema**: `Faltou OPENAI_API_KEY no .env`
 
-**Solução**: 
+**Solução**:
+
 1. Crie arquivo `.env` na raiz do projeto
 2. Adicione: `OPENAI_API_KEY=sua-chave-aqui`
 3. Execute o script novamente
@@ -599,6 +625,7 @@ npm run setup:db
 **Problema**: `Formato de CSV não reconhecido`
 
 **Soluções**:
+
 1. Verifique se o CSV é do Mercado Pago ou Nubank
 2. Certifique-se de que o cabeçalho está presente
 3. Verifique a codificação do arquivo (deve ser UTF-8)

@@ -1,173 +1,172 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { createApp } from '../src/app.js'
+import { describe, it, expect, beforeEach } from "vitest";
+import { createApp } from "../src/app.js";
 
-describe('Categories endpoints', () => {
-  let app: any
+describe("Categories endpoints", () => {
+  let app: any;
 
   beforeEach(async () => {
-    app = await createApp()
-  })
+    app = await createApp();
+  });
 
-  it('should list categories', async () => {
+  it("should list categories", async () => {
     const response = await app.inject({
-      method: 'GET',
-      url: '/categories',
+      method: "GET",
+      url: "/categories",
       headers: {
-        'x-api-key': 'changeme'
-      }
-    })
+        "x-api-key": "changeme",
+      },
+    });
 
-    expect(response.statusCode).toBe(200)
-    const result = JSON.parse(response.body)
-    
-    expect(result).toHaveProperty('items')
-    expect(result).toHaveProperty('total')
-    expect(Array.isArray(result.items)).toBe(true)
-  })
+    expect(response.statusCode).toBe(200);
+    const result = JSON.parse(response.body);
 
-  it('should return category hierarchy', async () => {
+    expect(result).toHaveProperty("items");
+    expect(result).toHaveProperty("total");
+    expect(Array.isArray(result.items)).toBe(true);
+  });
+
+  it("should return category hierarchy", async () => {
     const response = await app.inject({
-      method: 'GET',
-      url: '/categories/hierarchy',
+      method: "GET",
+      url: "/categories/hierarchy",
       headers: {
-        'x-api-key': 'changeme'
-      }
-    })
+        "x-api-key": "changeme",
+      },
+    });
 
-    expect(response.statusCode).toBe(200)
-    const result = JSON.parse(response.body)
-    
-    expect(Array.isArray(result)).toBe(true)
-  })
+    expect(response.statusCode).toBe(200);
+    const result = JSON.parse(response.body);
 
-  it('should create category', async () => {
+    expect(Array.isArray(result)).toBe(true);
+  });
+
+  it("should create category", async () => {
     const response = await app.inject({
-      method: 'POST',
-      url: '/categories',
+      method: "POST",
+      url: "/categories",
       headers: {
-        'x-api-key': 'changeme',
-        'content-type': 'application/json'
+        "x-api-key": "changeme",
+        "content-type": "application/json",
       },
       payload: {
-        name: 'Test Category',
-        slug: 'test-category',
-        kind: 'spend'
-      }
-    })
+        name: "Test Category",
+        slug: "test-category",
+        kind: "spend",
+      },
+    });
 
-    expect(response.statusCode).toBe(201)
-    const result = JSON.parse(response.body)
-    
-    expect(result.name).toBe('Test Category')
-    expect(result.slug).toBe('test-category')
-    expect(result.kind).toBe('spend')
-  })
+    expect(response.statusCode).toBe(201);
+    const result = JSON.parse(response.body);
 
-  it('should not create category with duplicate slug', async () => {
+    expect(result.name).toBe("Test Category");
+    expect(result.slug).toBe("test-category");
+    expect(result.kind).toBe("spend");
+  });
+
+  it("should not create category with duplicate slug", async () => {
     // Criar primeira categoria
     await app.inject({
-      method: 'POST',
-      url: '/categories',
+      method: "POST",
+      url: "/categories",
       headers: {
-        'x-api-key': 'changeme',
-        'content-type': 'application/json'
+        "x-api-key": "changeme",
+        "content-type": "application/json",
       },
       payload: {
-        name: 'Test Category',
-        slug: 'test-category',
-        kind: 'spend'
-      }
-    })
+        name: "Test Category",
+        slug: "test-category",
+        kind: "spend",
+      },
+    });
 
     // Tentar criar segunda categoria com mesmo slug
     const response = await app.inject({
-      method: 'POST',
-      url: '/categories',
+      method: "POST",
+      url: "/categories",
       headers: {
-        'x-api-key': 'changeme',
-        'content-type': 'application/json'
+        "x-api-key": "changeme",
+        "content-type": "application/json",
       },
       payload: {
-        name: 'Another Category',
-        slug: 'test-category',
-        kind: 'income'
-      }
-    })
+        name: "Another Category",
+        slug: "test-category",
+        kind: "income",
+      },
+    });
 
-    expect(response.statusCode).toBe(409)
-  })
+    expect(response.statusCode).toBe(409);
+  });
 
-  it('should update category', async () => {
+  it("should update category", async () => {
     // Criar categoria
     const createResponse = await app.inject({
-      method: 'POST',
-      url: '/categories',
+      method: "POST",
+      url: "/categories",
       headers: {
-        'x-api-key': 'changeme',
-        'content-type': 'application/json'
+        "x-api-key": "changeme",
+        "content-type": "application/json",
       },
       payload: {
-        name: 'Test Category',
-        slug: 'test-category',
-        kind: 'spend'
-      }
-    })
+        name: "Test Category",
+        slug: "test-category",
+        kind: "spend",
+      },
+    });
 
-    const created = JSON.parse(createResponse.body)
+    const created = JSON.parse(createResponse.body);
 
     // Atualizar categoria
     const response = await app.inject({
-      method: 'PATCH',
+      method: "PATCH",
       url: `/categories/${created.id}`,
       headers: {
-        'x-api-key': 'changeme',
-        'content-type': 'application/json'
+        "x-api-key": "changeme",
+        "content-type": "application/json",
       },
       payload: {
-        name: 'Updated Category',
-        kind: 'income'
-      }
-    })
+        name: "Updated Category",
+        kind: "income",
+      },
+    });
 
-    expect(response.statusCode).toBe(200)
-    const result = JSON.parse(response.body)
-    
-    expect(result.name).toBe('Updated Category')
-    expect(result.kind).toBe('income')
-    expect(result.slug).toBe('test-category') // Não mudou
-  })
+    expect(response.statusCode).toBe(200);
+    const result = JSON.parse(response.body);
 
-  it('should delete category', async () => {
+    expect(result.name).toBe("Updated Category");
+    expect(result.kind).toBe("income");
+    expect(result.slug).toBe("test-category"); // Não mudou
+  });
+
+  it("should delete category", async () => {
     // Criar categoria
     const createResponse = await app.inject({
-      method: 'POST',
-      url: '/categories',
+      method: "POST",
+      url: "/categories",
       headers: {
-        'x-api-key': 'changeme',
-        'content-type': 'application/json'
+        "x-api-key": "changeme",
+        "content-type": "application/json",
       },
       payload: {
-        name: 'Test Category',
-        slug: 'test-category',
-        kind: 'spend'
-      }
-    })
+        name: "Test Category",
+        slug: "test-category",
+        kind: "spend",
+      },
+    });
 
-    const created = JSON.parse(createResponse.body)
+    const created = JSON.parse(createResponse.body);
 
     // Excluir categoria
     const response = await app.inject({
-      method: 'DELETE',
+      method: "DELETE",
       url: `/categories/${created.id}`,
       headers: {
-        'x-api-key': 'changeme'
-      }
-    })
+        "x-api-key": "changeme",
+      },
+    });
 
-    expect(response.statusCode).toBe(200)
-    const result = JSON.parse(response.body)
-    
-    expect(result.success).toBe(true)
-  })
-})
+    expect(response.statusCode).toBe(200);
+    const result = JSON.parse(response.body);
 
+    expect(result.success).toBe(true);
+  });
+});

@@ -6,7 +6,7 @@
       "estabelecimento": "EURIVAL BATISTA NUNES",
       "cnpj": "",
       "tipo": "credito",
-      "valor": 60.00,
+      "valor": 60.0,
       "categoria": "Transferência",
       "subcategoria": "PIX Recebido",
       "meio_pagamento": "PIX",
@@ -22,7 +22,7 @@
       "estabelecimento": "AUTO POSTO GK LTDA",
       "cnpj": "12.345.678/0001-90",
       "tipo": "debito",
-      "valor": -50.00,
+      "valor": -50.0,
       "categoria": "Combustível",
       "subcategoria": "Posto de Gasolina",
       "meio_pagamento": "PIX",
@@ -38,13 +38,13 @@
       "categoria": "Combustível",
       "subcategoria": "Posto de Gasolina",
       "qtd_transacoes": 1,
-      "total": -50.00,
-      "ticket_medio": -50.00
+      "total": -50.0,
+      "ticket_medio": -50.0
     }
   ],
   "visaoGeral": {
-    "total_entradas": 60.00,
-    "total_saidas": 50.00,
-    "saldo_final_estimado": 10.00
+    "total_entradas": 60.0,
+    "total_saidas": 50.0,
+    "saldo_final_estimado": 10.0
   }
 }

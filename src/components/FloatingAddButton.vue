@@ -11,8 +11,8 @@
 <script setup lang="ts">
 // Emitir evento de clique
 defineEmits<{
-  click: []
-}>()
+  click: [];
+}>();
 </script>
 
 <style scoped>
@@ -34,7 +34,7 @@ defineEmits<{
 
 /* Efeito glassmorphism */
 .floating-add-button::before {
-  content: '';
+  content: "";
   @apply absolute inset-0 rounded-full;
   @apply bg-gradient-to-br from-blue-500/20 to-blue-700/20;
   @apply backdrop-blur-sm;
@@ -51,10 +51,9 @@ defineEmits<{
   .floating-add-button {
     @apply bottom-4 right-4 w-12 h-12;
   }
-  
+
   .floating-add-button i {
     @apply text-lg;
   }
 }
 </style>
-

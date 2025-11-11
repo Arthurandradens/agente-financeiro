@@ -8,35 +8,35 @@
   }
 }
 :root {
-  .p-datepicker-input{
+  .p-datepicker-input {
     /* @apply bg-gray-800; */
     padding: 0.6rem;
     color: #374151;
-    font-size: 0.950rem;
-    text-align: left
+    font-size: 0.95rem;
+    text-align: left;
   }
 }
 @layer components {
   .card {
     @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700;
   }
-  
+
   .card-header {
     @apply px-6 py-4 border-b border-gray-200 dark:border-gray-700;
   }
-  
+
   .card-content {
     @apply px-6 py-4;
   }
-  
+
   .kpi-card {
     @apply bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-700;
   }
-  
+
   .kpi-card.success {
     @apply from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700;
   }
-  
+
   .kpi-card.danger {
     @apply from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-red-200 dark:border-red-700;
   }
@@ -46,7 +46,7 @@
 
 /* DataTable - Paleta de cores consistente com a página */
 .p-datatable {
-  @apply bg-white dark:bg-gray-800 ;
+  @apply bg-white dark:bg-gray-800;
   border-radius: 0.5rem;
 }
 
@@ -87,16 +87,16 @@
   @apply bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700;
 } */
 
-.p-paginator{
+.p-paginator {
   @apply bg-gray-50 dark:bg-gray-700;
   background: #334155 !important;
   color: #ffff !important;
 }
-.p-paginator-current{
+.p-paginator-current {
   color: #ffff !important;
   margin-right: 0.5rem !important;
 }
-.p-paginator-page.p-paginator-page-selected{
+.p-paginator-page.p-paginator-page-selected {
   background: #ffff !important;
   color: #334155 !important;
 }
@@ -153,7 +153,7 @@
   color: #fff !important;
 }
 
-.p-datepicker-day-selected{
+.p-datepicker-day-selected {
   background: #2e3642 !important;
   color: #fff !important;
 }
@@ -433,7 +433,7 @@
 
 .p-progressbar .p-progressbar-value {
   @apply bg-blue-600;
-} */ 
+} */
 
 /* Corrigir fundos brancos em spinner */
 /* .p-progress-spinner {
@@ -450,7 +450,7 @@
 } */
 
 /* .p-checkbox .p-checkbox-box.p-highlight { */
-  /* @apply bg-blue-600 border-blue-600;
+/* @apply bg-blue-600 border-blue-600;
 }
 
 .p-radiobutton .p-radiobutton-box {
@@ -459,5 +459,4 @@
 
 .p-radiobutton .p-radiobutton-box.p-highlight {
   @apply bg-blue-600 border-blue-600;
-} */ 
-
+} */

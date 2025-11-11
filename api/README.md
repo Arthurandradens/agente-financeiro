@@ -77,22 +77,27 @@ npm start
 ## Endpoints
 
 ### Health
+
 - `GET /health` - Status da API
 
 ### Statements
+
 - `POST /statements/ingest` - Ingestão de transações (requer API key)
 - `GET /statements/:id` - Buscar statement por ID
 
 ### Transactions
+
 - `GET /transactions` - Listar transações com filtros e paginação
 
 ### Dashboard
+
 - `GET /dash/overview` - KPIs gerais (Entradas, Saídas, Saldo, Tarifas, Investimentos)
 - `GET /dash/by-category` - Agrupamento por categoria para gráfico pizza/rosca
 - `GET /dash/series` - Séries temporais para gráfico de evolução
 - `GET /dash/top-subcategories` - Top 10 subcategorias para gráfico de barras
 
 ### Categories
+
 - `GET /categories` - Listar todas as categorias
 - `GET /categories/hierarchy` - Listar categorias em hierarquia
 - `GET /categories/:id` - Buscar categoria por ID
@@ -103,6 +108,7 @@ npm start
 ## Exemplos de Uso
 
 ### 1. Dashboard Overview
+
 ```bash
 # KPIs gerais do período
 curl "http://localhost:8080/dash/overview?from=2025-01-01&to=2025-01-31"
@@ -118,6 +124,7 @@ curl "http://localhost:8080/dash/overview?from=2025-01-01&to=2025-01-31"
 ```
 
 ### 2. Gastos por Categoria
+
 ```bash
 # Gráfico pizza/rosca de gastos
 curl "http://localhost:8080/dash/by-category?from=2025-01-01&to=2025-01-31"
@@ -135,6 +142,7 @@ curl "http://localhost:8080/dash/by-category?from=2025-01-01&to=2025-01-31"
 ```
 
 ### 3. Evolução Temporal
+
 ```bash
 # Gráfico de evolução (diário)
 curl "http://localhost:8080/dash/series?from=2025-01-01&to=2025-01-31&groupBy=day"
@@ -154,6 +162,7 @@ curl "http://localhost:8080/dash/series?from=2025-01-01&to=2025-01-31&groupBy=we
 ```
 
 ### 4. Top Subcategorias
+
 ```bash
 # Top 10 subcategorias de gastos
 curl "http://localhost:8080/dash/top-subcategories?from=2025-01-01&to=2025-01-31"
@@ -169,6 +178,7 @@ curl "http://localhost:8080/dash/top-subcategories?from=2025-01-01&to=2025-01-31
 ```
 
 ### 5. Listagem de Transações
+
 ```bash
 # Listar todas as transações (com transferências)
 curl "http://localhost:8080/transactions?from=2025-01-01&to=2025-01-31"
@@ -216,12 +226,14 @@ curl "http://localhost:8080/transactions?page=2&pageSize=10&sort=-data"
 ## Regras de Negócio
 
 ### Exclusões Automáticas
+
 - **Transferências internas** (`is_internal_transfer=1`) são excluídas de entradas/saídas
 - **Pagamentos de fatura** (`is_card_bill_payment=1`) são excluídos de saídas
 - **Aportes de investimento** (`is_investment=1` + `tipo='debito'`) vão para KPI "Investimentos (Aportes)"
 - **Rendimentos de investimento** (`is_investment=1` + `tipo='credito'`) contam como entradas
 
 ### Filtros de Transações
+
 - `includeTransfers=false` (padrão): exclui transferências internas
 - `includeTransfers=true`: inclui todas as transações
 - `type`: filtra por tipo (credito/debito)
@@ -230,6 +242,7 @@ curl "http://localhost:8080/transactions?page=2&pageSize=10&sort=-data"
 - `q`: busca textual em descrição/estabelecimento
 
 ### Ordenação
+
 - Campos permitidos: `data`, `valor`, `categoria`, `confianca_classificacao`
 - Prefixo `-` para ordem decrescente
 - Exemplo: `sort=-data` (mais recentes primeiro)
@@ -268,6 +281,7 @@ npm test
 O script `classificar_extrato.js` foi modificado para enviar dados automaticamente para a API após gerar o Excel.
 
 Configure as variáveis:
+
 - `API_BASE_URL` - URL da API (default: http://localhost:8080)
 - `API_KEY` - Chave de autenticação
 
@@ -297,6 +311,7 @@ npm run setup:payment-methods
 ### Novos Endpoints
 
 #### GET /payment-methods
+
 Lista todos os métodos de pagamento disponíveis.
 
 ```bash
@@ -304,6 +319,7 @@ curl http://localhost:8080/payment-methods
 ```
 
 **Response:**
+
 ```json
 [
   {
@@ -324,6 +340,7 @@ curl http://localhost:8080/payment-methods
 ### Filtros Atualizados
 
 #### GET /transactions
+
 Novos filtros para métodos de pagamento:
 
 ```bash
@@ -338,6 +355,7 @@ curl "http://localhost:8080/transactions?userId=1&paymentMethodId=7&from=2024-01
 ```
 
 **Response atualizado:**
+
 ```json
 {
   "items": [
@@ -345,7 +363,7 @@ curl "http://localhost:8080/transactions?userId=1&paymentMethodId=7&from=2024-01
       "id": 123,
       "data": "2024-01-15",
       "descricaoOriginal": "Transferência PIX",
-      "valor": -100.00,
+      "valor": -100.0,
       "paymentMethodId": 1,
       "paymentCode": "PIX",
       "paymentLabel": "Pix",
@@ -361,6 +379,7 @@ curl "http://localhost:8080/transactions?userId=1&paymentMethodId=7&from=2024-01
 ### Ingestão Atualizada
 
 #### POST /statements/ingest
+
 Agora aceita `payment_method_id` nas transações:
 
 ```json
@@ -373,7 +392,7 @@ Agora aceita `payment_method_id` nas transações:
     {
       "data": "2024-01-15",
       "descricao_original": "Transferência PIX",
-      "valor": -100.00,
+      "valor": -100.0,
       "tipo": "debito",
       "payment_method_id": 1,
       "category_id": 5,
@@ -385,24 +404,25 @@ Agora aceita `payment_method_id` nas transações:
 ```
 
 **Comportamento:**
+
 - Se `payment_method_id` fornecido: valida existência e preenche `meio_pagamento` automaticamente
 - Se não fornecido: mantém `meio_pagamento` original (string)
 - Campo `meio_pagamento` (string) será removido em versão futura
 
 ### Métodos de Pagamento Disponíveis
 
-| ID | Code | Label | Uso |
-|----|------|-------|-----|
-| 1 | PIX | Pix | Transferências PIX |
-| 2 | TED | TED | Transferências TED |
-| 3 | DOC | DOC | Transferências DOC |
-| 4 | TEF | TEF Interna | Transferências entre contas |
-| 5 | BOLETO | Boleto | Pagamentos de boleto |
-| 6 | CARTAO_DEBITO | Cartão Débito | Compras no débito |
-| 7 | CARTAO_CREDITO | Cartão Crédito | Compras no crédito, faturas |
-| 8 | SAQUE | Saque | Saques em ATM |
-| 9 | TARIFA | Tarifa/Encargo | Tarifas, anuidades, IOF |
-| 99 | OUTRO | Outro | Outros métodos |
+| ID  | Code           | Label          | Uso                         |
+| --- | -------------- | -------------- | --------------------------- |
+| 1   | PIX            | Pix            | Transferências PIX          |
+| 2   | TED            | TED            | Transferências TED          |
+| 3   | DOC            | DOC            | Transferências DOC          |
+| 4   | TEF            | TEF Interna    | Transferências entre contas |
+| 5   | BOLETO         | Boleto         | Pagamentos de boleto        |
+| 6   | CARTAO_DEBITO  | Cartão Débito  | Compras no débito           |
+| 7   | CARTAO_CREDITO | Cartão Crédito | Compras no crédito, faturas |
+| 8   | SAQUE          | Saque          | Saques em ATM               |
+| 9   | TARIFA         | Tarifa/Encargo | Tarifas, anuidades, IOF     |
+| 99  | OUTRO          | Outro          | Outros métodos              |
 
 ### Compatibilidade
 
