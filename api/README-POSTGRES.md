@@ -24,6 +24,7 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/finance_db
 ## Scripts Disponíveis
 
 ### Configuração Inicial
+
 ```bash
 # Configurar o banco PostgreSQL
 npm run setup:postgres
@@ -38,6 +39,7 @@ npm run seed:banks
 ```
 
 ### Desenvolvimento
+
 ```bash
 # Iniciar servidor de desenvolvimento
 npm run dev
@@ -75,19 +77,25 @@ curl -X POST http://localhost:8080/statements/ingest \
 ## Troubleshooting
 
 ### Problema de Conexão
+
 Verifique se o PostgreSQL está rodando:
+
 ```bash
 psql -U postgres -c "SELECT version();"
 ```
 
 ### Problema de Permissões
+
 Certifique-se de que o usuário `postgres` tem permissões adequadas:
+
 ```sql
 GRANT ALL PRIVILEGES ON DATABASE finance_db TO postgres;
 ```
 
 ### Reset do Banco
+
 Para limpar e recriar o banco:
+
 ```bash
 # Deletar banco
 psql -U postgres -c "DROP DATABASE IF EXISTS finance_db;"

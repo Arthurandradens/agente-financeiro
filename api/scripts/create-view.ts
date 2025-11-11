@@ -1,16 +1,16 @@
-import { drizzle } from 'drizzle-orm/node-postgres'
-import { Pool } from 'pg'
-import { config } from '../src/config/env'
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+import { config } from "../src/config/env";
 
 // Conectar ao banco PostgreSQL
 const pool = new Pool({
-  connectionString: config.DATABASE_URL
-})
-const db = drizzle(pool)
+  connectionString: config.DATABASE_URL,
+});
+const db = drizzle(pool);
 
 async function createView() {
-  console.log('🔍 Criando VIEW v_transactions_normalized...')
-  
+  console.log("🔍 Criando VIEW v_transactions_normalized...");
+
   try {
     // SQL para criar a VIEW
     const createViewSQL = `
@@ -39,45 +39,48 @@ async function createView() {
       FROM transactions t
       LEFT JOIN categories c ON c.id = t.category_id
       LEFT JOIN categories sc ON sc.id = t.subcategory_id;
-    `
-    
+    `;
+
     // Executar SQL
-    sqlite.exec(createViewSQL)
-    
-    console.log('✅ VIEW v_transactions_normalized criada com sucesso!')
-    
+    sqlite.exec(createViewSQL);
+
+    console.log("✅ VIEW v_transactions_normalized criada com sucesso!");
+
     // Testar a VIEW
-    const testQuery = sqlite.prepare(`
+    const testQuery = sqlite
+      .prepare(
+        `
       SELECT COUNT(*) as total,
              SUM(expense_effective) as total_expenses,
              SUM(income_effective) as total_income
       FROM v_transactions_normalized
-    `).get()
-    
-    console.log('📊 Teste da VIEW:')
-    console.log(`   Total de registros: ${testQuery.total}`)
-    console.log(`   Total de gastos efetivos: ${testQuery.total_expenses}`)
-    console.log(`   Total de entradas efetivas: ${testQuery.total_income}`)
-    
+    `,
+      )
+      .get();
+
+    console.log("📊 Teste da VIEW:");
+    console.log(`   Total de registros: ${testQuery.total}`);
+    console.log(`   Total de gastos efetivos: ${testQuery.total_expenses}`);
+    console.log(`   Total de entradas efetivas: ${testQuery.total_income}`);
   } catch (error) {
-    console.error('❌ Erro ao criar VIEW:', error)
-    throw error
+    console.error("❌ Erro ao criar VIEW:", error);
+    throw error;
   } finally {
-    await pool.end()
+    await pool.end();
   }
 }
 
 // Executar se chamado diretamente
-if (process.argv[1] && process.argv[1].includes('create-view.ts')) {
+if (process.argv[1] && process.argv[1].includes("create-view.ts")) {
   createView()
     .then(() => {
-      console.log('✅ Script finalizado')
-      process.exit(0)
+      console.log("✅ Script finalizado");
+      process.exit(0);
     })
     .catch((error) => {
-      console.error('❌ Erro:', error)
-      process.exit(1)
-    })
+      console.error("❌ Erro:", error);
+      process.exit(1);
+    });
 }
 
-export { createView }
+export { createView };

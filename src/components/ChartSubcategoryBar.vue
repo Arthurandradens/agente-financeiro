@@ -10,7 +10,10 @@
       <div v-if="loading" class="flex justify-center items-center h-80">
         <ProgressSpinner />
       </div>
-      <div v-else-if="chartData.labels.length === 0" class="h-80 flex items-center justify-center">
+      <div
+        v-else-if="chartData.labels.length === 0"
+        class="h-80 flex items-center justify-center"
+      >
         <div class="text-center text-gray-500 dark:text-gray-400">
           <i class="pi pi-chart-bar text-4xl mb-2"></i>
           <p>Nenhum dado para exibir</p>
@@ -22,50 +25,71 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useDashboardStore } from '@/stores/useDashboardStore'
-import { Bar } from 'vue-chartjs'
-import { Chart as ChartJS, Title, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js'
-import ProgressSpinner from 'primevue/progressspinner'
+import { computed } from "vue";
+import { useDashboardStore } from "@/stores/useDashboardStore";
+import { Bar } from "vue-chartjs";
+import {
+  Chart as ChartJS,
+  Title,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+} from "chart.js";
+import ProgressSpinner from "primevue/progressspinner";
 
-ChartJS.register(Title, Tooltip, Legend, CategoryScale, LinearScale, BarElement)
+ChartJS.register(
+  Title,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+);
 
-const store = useDashboardStore()
-const loading = computed(() => store.loading)
+const store = useDashboardStore();
+const loading = computed(() => store.loading);
 
-const chartData = computed(() => store.chartSubcategoryData)
+const chartData = computed(() => store.chartSubcategoryData);
 
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
     legend: {
-      display: false
+      display: false,
     },
     tooltip: {
       callbacks: {
-        label: function(context: any) {
-          let label = context.label || '';
+        label: function (context: any) {
+          let label = context.label || "";
           if (label) {
-            label += ': ';
+            label += ": ";
           }
           if (context.parsed.y !== null) {
-            label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed.y);
+            label += new Intl.NumberFormat("pt-BR", {
+              style: "currency",
+              currency: "BRL",
+            }).format(context.parsed.y);
           }
           return label;
-        }
-      }
-    }
+        },
+      },
+    },
   },
   scales: {
     y: {
       beginAtZero: true,
       ticks: {
-        callback: function(value: any) {
-          return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-        }
-      }
-    }
-  }
-}
+        callback: function (value: any) {
+          return new Intl.NumberFormat("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          }).format(value);
+        },
+      },
+    },
+  },
+};
 </script>

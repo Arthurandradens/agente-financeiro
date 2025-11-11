@@ -18,13 +18,18 @@
         </div>
       </div>
     </div>
-    
+
     <div class="card-content">
       <div v-if="loading" class="flex justify-center items-center py-8">
         <ProgressSpinner />
       </div>
-      <div v-else-if="filteredTransactions.length === 0" class="text-center py-8">
-        <i class="pi pi-table text-4xl text-gray-400 dark:text-gray-600 mb-4"></i>
+      <div
+        v-else-if="filteredTransactions.length === 0"
+        class="text-center py-8"
+      >
+        <i
+          class="pi pi-table text-4xl text-gray-400 dark:text-gray-600 mb-4"
+        ></i>
         <p class="text-gray-600 dark:text-gray-400">
           Nenhuma transação encontrada
         </p>
@@ -32,15 +37,15 @@
           Ajuste os filtros ou carregue um arquivo
         </p>
       </div>
-      <DataTable v-else 
-        :value="filteredTransactions" 
-        :paginator="true" 
+      <DataTable
+        v-else
+        :value="filteredTransactions"
+        :paginator="true"
         :rows="20"
         :rowsPerPageOptions="[10, 20, 50]"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} transações"
         class="p-datatable-sm"
-        
         :scrollable="true"
         scrollHeight="400px"
       >
@@ -49,7 +54,7 @@
             {{ formatDate(data.date) }}
           </template>
         </Column>
-        
+
         <Column field="description" header="Descrição" :sortable="true">
           <template #body="{ data }">
             <div class="max-w-xs truncate" :title="data.description">
@@ -57,7 +62,7 @@
             </div>
           </template>
         </Column>
-        
+
         <Column field="merchant" header="Estabelecimento" :sortable="true">
           <template #body="{ data }">
             <div class="max-w-xs truncate" :title="data.merchant">
@@ -65,44 +70,54 @@
             </div>
           </template>
         </Column>
-        
+
         <Column field="type" header="Tipo" :sortable="true">
           <template #body="{ data }">
-            <Badge 
+            <Badge
               :value="data.type === 'income' ? 'Entrada' : 'Saída'"
               :severity="data.type === 'income' ? 'success' : 'danger'"
             />
           </template>
         </Column>
-        
+
         <Column field="amount" header="Valor" :sortable="true">
           <template #body="{ data }">
-            <span :class="data.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
-              {{ formatCurrency(data.type === 'income' ? data.amount : -Math.abs(data.amount)) }}
+            <span
+              :class="
+                data.type === 'income'
+                  ? 'text-green-600 dark:text-green-400'
+                  : 'text-red-600 dark:text-red-400'
+              "
+            >
+              {{
+                formatCurrency(
+                  data.type === "income" ? data.amount : -Math.abs(data.amount),
+                )
+              }}
             </span>
           </template>
         </Column>
-        
+
         <Column field="category" header="Categoria" :sortable="true">
           <template #body="{ data }">
             <Tag :value="data.category" severity="info" />
           </template>
         </Column>
-        
+
         <Column field="subcategory" header="Subcategoria" :sortable="true">
           <template #body="{ data }">
             <span v-if="data.subcategory">{{ data.subcategory }}</span>
             <span v-else class="text-gray-400">-</span>
           </template>
         </Column>
-        
+
         <Column field="payment_method" header="Meio" :sortable="true">
           <template #body="{ data }">
             <span v-if="data.payment_method">{{ data.payment_method }}</span>
             <span v-else class="text-gray-400">-</span>
           </template>
         </Column>
-        
+
         <Column header="Ações" :sortable="false" style="width: 120px">
           <template #body="{ data }">
             <div class="flex gap-2">
@@ -125,7 +140,7 @@
             </div>
           </template>
         </Column>
-        
+
         <!-- <Column field="confianca_classificacao" header="Confiança" :sortable="true">
           <template #body="{ data }">
             <div class="flex items-center gap-2">
@@ -143,83 +158,95 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useDashboardStore } from '@/stores/useDashboardStore'
-import { formatCurrency, formatDate } from '@/utils/format'
-import { useConfirm } from 'primevue/useconfirm'
+import { computed } from "vue";
+import { useDashboardStore } from "@/stores/useDashboardStore";
+import { formatCurrency, formatDate } from "@/utils/format";
+import { useConfirm } from "primevue/useconfirm";
 
-const store = useDashboardStore()
-const confirm = useConfirm()
+const store = useDashboardStore();
+const confirm = useConfirm();
 
-const loading = computed(() => store.loading)
-const filteredTransactions = computed(() => store.filteredTransactions)
-console.log('filteredTransactions', filteredTransactions.value)
-console.log('Primeira transação:', filteredTransactions.value[0])
+const loading = computed(() => store.loading);
+const filteredTransactions = computed(() => store.filteredTransactions);
+console.log("filteredTransactions", filteredTransactions.value);
+console.log("Primeira transação:", filteredTransactions.value[0]);
 
 // Emits
 const emit = defineEmits<{
-  edit: [transaction: any]
-}>()
+  edit: [transaction: any];
+}>();
 
 const handleEdit = (transaction: any) => {
-  emit('edit', transaction)
-}
+  emit("edit", transaction);
+};
 
 const confirmDelete = (transaction: any) => {
   if (confirm) {
     confirm.require({
       message: `Tem certeza que deseja excluir esta transação?`,
-      header: 'Confirmar Exclusão',
-      icon: 'pi pi-exclamation-triangle',
-      rejectLabel: 'Cancelar',
-      acceptLabel: 'Excluir',
+      header: "Confirmar Exclusão",
+      icon: "pi pi-exclamation-triangle",
+      rejectLabel: "Cancelar",
+      acceptLabel: "Excluir",
       accept: async () => {
         try {
-          await store.deleteTransaction(transaction.id)
+          await store.deleteTransaction(transaction.id);
         } catch (error) {
-          console.error('Erro ao excluir transação:', error)
+          console.error("Erro ao excluir transação:", error);
         }
-      }
-    })
+      },
+    });
   } else {
     // Fallback para quando o ConfirmationService não estiver disponível
-    if (window.confirm('Tem certeza que deseja excluir esta transação?')) {
-      store.deleteTransaction(transaction.id)
+    if (window.confirm("Tem certeza que deseja excluir esta transação?")) {
+      store.deleteTransaction(transaction.id);
     }
   }
-}
+};
 
 const exportCSV = () => {
-  if (filteredTransactions.value.length === 0) return
-  
+  if (filteredTransactions.value.length === 0) return;
+
   const headers = [
-    'Data', 'Descrição', 'Estabelecimento', 'Tipo', 'Valor', 
-    'Categoria', 'Subcategoria', 'Meio de Pagamento', 'Confiança'
-  ]
-  
+    "Data",
+    "Descrição",
+    "Estabelecimento",
+    "Tipo",
+    "Valor",
+    "Categoria",
+    "Subcategoria",
+    "Meio de Pagamento",
+    "Confiança",
+  ];
+
   const csvContent = [
-    headers.join(','),
-    ...filteredTransactions.value.map(t => [
-      t.date,
-      `"${t.description}"`,
-      `"${t.merchant}"`,
-      t.type === 'income' ? 'Entrada' : 'Saída',
-      t.type === 'income' ? t.amount : -Math.abs(t.amount),
-      `"${t.category}"`,
-      `"${t.subcategory || ''}"`,
-      `"${t.payment_method || ''}"`,
-      Math.round((t as any).confianca_classificacao * 100)
-    ].join(','))
-  ].join('\n')
-  
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-  const link = document.createElement('a')
-  const url = URL.createObjectURL(blob)
-  link.setAttribute('href', url)
-  link.setAttribute('download', `transacoes_${new Date().toISOString().split('T')[0]}.csv`)
-  link.style.visibility = 'hidden'
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-}
+    headers.join(","),
+    ...filteredTransactions.value.map((t) =>
+      [
+        t.date,
+        `"${t.description}"`,
+        `"${t.merchant}"`,
+        t.type === "income" ? "Entrada" : "Saída",
+        t.type === "income" ? t.amount : -Math.abs(t.amount),
+        `"${t.category}"`,
+        `"${t.subcategory || ""}"`,
+        `"${t.payment_method || ""}"`,
+        Math.round((t as any).confianca_classificacao * 100),
+      ].join(","),
+    ),
+  ].join("\n");
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  link.setAttribute("href", url);
+  link.setAttribute(
+    "download",
+    `transacoes_${new Date().toISOString().split("T")[0]}.csv`,
+  );
+  link.style.visibility = "hidden";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
 </script>

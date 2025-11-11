@@ -8,7 +8,7 @@
       <!-- Header -->
       <div class="modal-header">
         <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
-          {{ isEditing ? 'Editar Transação' : 'Nova Transação' }}
+          {{ isEditing ? "Editar Transação" : "Nova Transação" }}
         </h3>
         <Button
           icon="pi pi-times"
@@ -31,7 +31,7 @@
               :class="[
                 'toggle-button',
                 'toggle-entrada',
-                form.type === 'income' ? 'toggle-active' : ''
+                form.type === 'income' ? 'toggle-active' : '',
               ]"
             >
               <i class="pi pi-arrow-up mr-2"></i>
@@ -43,7 +43,7 @@
               :class="[
                 'toggle-button',
                 'toggle-saida',
-                form.type === 'spend' ? 'toggle-active' : ''
+                form.type === 'spend' ? 'toggle-active' : '',
               ]"
             >
               <i class="pi pi-arrow-down mr-2"></i>
@@ -79,7 +79,9 @@
             :min="0"
             :maxFractionDigits="2"
           />
-          <small v-if="errors.amount" class="p-error">{{ errors.amount }}</small>
+          <small v-if="errors.amount" class="p-error">{{
+            errors.amount
+          }}</small>
         </div>
 
         <!-- Categoria -->
@@ -95,7 +97,9 @@
             :class="{ 'p-invalid': errors.category_id }"
             @change="onCategoryChange"
           />
-          <small v-if="errors.category_id" class="p-error">{{ errors.category_id }}</small>
+          <small v-if="errors.category_id" class="p-error">{{
+            errors.category_id
+          }}</small>
         </div>
 
         <!-- Subcategoria -->
@@ -124,7 +128,9 @@
             class="w-full"
             :class="{ 'p-invalid': errors.payment_method_id }"
           />
-          <small v-if="errors.payment_method_id" class="p-error">{{ errors.payment_method_id }}</small>
+          <small v-if="errors.payment_method_id" class="p-error">{{
+            errors.payment_method_id
+          }}</small>
         </div>
 
         <!-- Banco -->
@@ -139,7 +145,9 @@
             class="w-full"
             :class="{ 'p-invalid': errors.bank_id }"
           />
-          <small v-if="errors.bank_id" class="p-error">{{ errors.bank_id }}</small>
+          <small v-if="errors.bank_id" class="p-error">{{
+            errors.bank_id
+          }}</small>
         </div>
 
         <!-- Descrição -->
@@ -174,224 +182,240 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
-import { useDashboardStore } from '@/stores/useDashboardStore'
-import type { TransactionCreateDTO } from '@/types'
+import { ref, computed, watch, onMounted } from "vue";
+import { useDashboardStore } from "@/stores/useDashboardStore";
+import type { TransactionCreateDTO } from "@/types";
 
 interface Props {
-  visible: boolean
-  editingTransaction?: any
+  visible: boolean;
+  editingTransaction?: any;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 const emit = defineEmits<{
-  close: []
-  saved: []
-}>()
+  close: [];
+  saved: [];
+}>();
 
-const store = useDashboardStore()
-const loading = ref(false)
+const store = useDashboardStore();
+const loading = ref(false);
 
 // Form data
-const today = new Date()
-const year = today.getFullYear()
-const month = String(today.getMonth() + 1).padStart(2, '0')
-const day = String(today.getDate()).padStart(2, '0')
-const todayString = `${year}-${month}-${day}`
+const today = new Date();
+const year = today.getFullYear();
+const month = String(today.getMonth() + 1).padStart(2, "0");
+const day = String(today.getDate()).padStart(2, "0");
+const todayString = `${year}-${month}-${day}`;
 
 const form = ref<TransactionCreateDTO>({
   date: todayString,
   amount: 0,
-  type: 'spend',
+  type: "spend",
   category_id: 0,
   subcategory_id: undefined,
   payment_method_id: 0,
   bank_id: 0,
-  description: '',
-  merchant: ''
-})
+  description: "",
+  merchant: "",
+});
 
 // Computed para converter data para o formato correto do Calendar
 const calendarDate = computed({
   get: () => {
-    if (!form.value.date) return null
+    if (!form.value.date) return null;
     // Converter string ISO para Date object, ajustando timezone
-    const date = new Date(form.value.date + 'T00:00:00')
-    return date
+    const date = new Date(form.value.date + "T00:00:00");
+    return date;
   },
   set: (value: Date | null) => {
     if (value) {
       // Converter Date object para string ISO, ajustando timezone
-      const year = value.getFullYear()
-      const month = String(value.getMonth() + 1).padStart(2, '0')
-      const day = String(value.getDate()).padStart(2, '0')
-      form.value.date = `${year}-${month}-${day}`
+      const year = value.getFullYear();
+      const month = String(value.getMonth() + 1).padStart(2, "0");
+      const day = String(value.getDate()).padStart(2, "0");
+      form.value.date = `${year}-${month}-${day}`;
     }
-  }
-})
+  },
+});
 
 // Errors
-const errors = ref<Record<string, string>>({})
+const errors = ref<Record<string, string>>({});
 
 // Computed
-const isEditing = computed(() => !!props.editingTransaction)
-const filterOptions = computed(() => store.filterOptions)
+const isEditing = computed(() => !!props.editingTransaction);
+const filterOptions = computed(() => store.filterOptions);
 
 const filteredCategories = computed(() => {
-  const type = form.value.type
-  if (type === 'income') {
+  const type = form.value.type;
+  if (type === "income") {
     // Entradas: apenas categorias do tipo 'income'
-    return filterOptions.value.categorias.filter(c => ["income","transfer"].includes(c.kind) && c.id !== 502)
+    return filterOptions.value.categorias.filter(
+      (c) => ["income", "transfer"].includes(c.kind) && c.id !== 502,
+    );
   } else {
     // Saídas: categorias dos tipos 'spend', 'fee', 'transfer', 'invest'
-    return filterOptions.value.categorias.filter(c => 
-      ['spend', 'fee', 'transfer', 'invest'].includes(c.kind)
-    )
+    return filterOptions.value.categorias.filter((c) =>
+      ["spend", "fee", "transfer", "invest"].includes(c.kind),
+    );
   }
-})
+});
 
 const availableSubcategories = computed(() => {
-  if (!form.value.category_id) return []
-  const selectedCategory = filterOptions.value.categorias.find(c => c.id === form.value.category_id)
-  if (!selectedCategory) return []
-  
+  if (!form.value.category_id) return [];
+  const selectedCategory = filterOptions.value.categorias.find(
+    (c) => c.id === form.value.category_id,
+  );
+  if (!selectedCategory) return [];
+
   // Filtrar subcategorias pela categoria pai e mesmo tipo
-  return filterOptions.value.subcategorias.filter(sub => 
-    sub.parentId === form.value.category_id && sub.kind === selectedCategory.kind
-  )
-})
+  return filterOptions.value.subcategorias.filter(
+    (sub) =>
+      sub.parentId === form.value.category_id &&
+      sub.kind === selectedCategory.kind,
+  );
+});
 
 // Methods
 const resetForm = () => {
   // Corrigir problema de timezone para data atual
-  const today = new Date()
-  const year = today.getFullYear()
-  const month = String(today.getMonth() + 1).padStart(2, '0')
-  const day = String(today.getDate()).padStart(2, '0')
-  const todayString = `${year}-${month}-${day}`
-  
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  const todayString = `${year}-${month}-${day}`;
+
   form.value = {
     date: todayString,
     amount: 0,
-    type: 'spend',
+    type: "spend",
     category_id: 0,
     subcategory_id: undefined,
     payment_method_id: 0,
     bank_id: 0,
-    description: '',
-    merchant: ''
-  }
-  errors.value = {}
-}
+    description: "",
+    merchant: "",
+  };
+  errors.value = {};
+};
 
 const validateForm = () => {
-  errors.value = {}
-  
+  errors.value = {};
+
   if (!form.value.date) {
-    errors.value.date = 'Data é obrigatória'
+    errors.value.date = "Data é obrigatória";
   }
-  
+
   if (!form.value.amount || form.value.amount <= 0) {
-    errors.value.amount = 'Valor deve ser maior que zero'
+    errors.value.amount = "Valor deve ser maior que zero";
   }
-  
+
   if (!form.value.category_id) {
-    errors.value.category_id = 'Categoria é obrigatória'
+    errors.value.category_id = "Categoria é obrigatória";
   }
-  
+
   if (!form.value.payment_method_id) {
-    errors.value.payment_method_id = 'Meio de pagamento é obrigatório'
+    errors.value.payment_method_id = "Meio de pagamento é obrigatório";
   }
-  
+
   if (!form.value.bank_id) {
-    errors.value.bank_id = 'Banco é obrigatório'
+    errors.value.bank_id = "Banco é obrigatório";
   }
-  
-  return Object.keys(errors.value).length === 0
-}
+
+  return Object.keys(errors.value).length === 0;
+};
 
 const onCategoryChange = () => {
   // Limpar subcategoria quando categoria muda
-  form.value.subcategory_id = undefined
-}
+  form.value.subcategory_id = undefined;
+};
 
 const handleSubmit = async () => {
-  if (!validateForm()) return
-  
-  loading.value = true
-  
+  if (!validateForm()) return;
+
+  loading.value = true;
+
   try {
     if (isEditing.value) {
-      await store.updateTransaction(props.editingTransaction.id, form.value)
+      await store.updateTransaction(props.editingTransaction.id, form.value);
     } else {
-      await store.createTransaction(form.value)
+      await store.createTransaction(form.value);
     }
-    
-    emit('saved')
-    resetForm()
+
+    emit("saved");
+    resetForm();
   } catch (error: any) {
-    console.error('Erro ao salvar transação:', error)
+    console.error("Erro ao salvar transação:", error);
     // Aqui você pode adicionar um toast de erro
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 // Watchers
-watch(() => props.visible, (newVisible) => {
-  if (newVisible && props.editingTransaction) {
-    // Preencher formulário com dados da transação
-    form.value = {
-      date: props.editingTransaction.date || todayString,
-      amount: props.editingTransaction.amount || 0,
-      type: props.editingTransaction.type || 'spend',
-      category_id: props.editingTransaction.category_id || 0,
-      subcategory_id: props.editingTransaction.subcategory_id,
-      payment_method_id: props.editingTransaction.payment_method_id || 0,
-      bank_id: props.editingTransaction.bank_id || 0,
-      description: props.editingTransaction.description || '',
-      merchant: props.editingTransaction.merchant || ''
+watch(
+  () => props.visible,
+  (newVisible) => {
+    if (newVisible && props.editingTransaction) {
+      // Preencher formulário com dados da transação
+      form.value = {
+        date: props.editingTransaction.date || todayString,
+        amount: props.editingTransaction.amount || 0,
+        type: props.editingTransaction.type || "spend",
+        category_id: props.editingTransaction.category_id || 0,
+        subcategory_id: props.editingTransaction.subcategory_id,
+        payment_method_id: props.editingTransaction.payment_method_id || 0,
+        bank_id: props.editingTransaction.bank_id || 0,
+        description: props.editingTransaction.description || "",
+        merchant: props.editingTransaction.merchant || "",
+      };
+    } else if (newVisible && !props.editingTransaction) {
+      resetForm();
+    } else if (!newVisible) {
+      resetForm();
     }
-  } else if (newVisible && !props.editingTransaction) {
-    resetForm()
-  } else if (!newVisible) {
-    resetForm()
-  }
-})
+  },
+);
 
 // Watcher específico para editingTransaction
-watch(() => props.editingTransaction, (newTransaction) => {
-  if (newTransaction && props.visible) {
-    form.value = {
-      date: newTransaction.date || todayString,
-      amount: newTransaction.amount || 0,
-      type: newTransaction.type || 'spend',
-      category_id: newTransaction.category_id || 0,
-      subcategory_id: newTransaction.subcategory_id,
-      payment_method_id: newTransaction.payment_method_id || 0,
-      bank_id: newTransaction.bank_id || 0,
-      description: newTransaction.description || '',
-      merchant: newTransaction.merchant || ''
+watch(
+  () => props.editingTransaction,
+  (newTransaction) => {
+    if (newTransaction && props.visible) {
+      form.value = {
+        date: newTransaction.date || todayString,
+        amount: newTransaction.amount || 0,
+        type: newTransaction.type || "spend",
+        category_id: newTransaction.category_id || 0,
+        subcategory_id: newTransaction.subcategory_id,
+        payment_method_id: newTransaction.payment_method_id || 0,
+        bank_id: newTransaction.bank_id || 0,
+        description: newTransaction.description || "",
+        merchant: newTransaction.merchant || "",
+      };
     }
-  }
-}, { immediate: true })
+  },
+  { immediate: true },
+);
 
-watch(() => form.value.type, () => {
-  // Limpar categoria e subcategoria ao trocar tipo
-  form.value.category_id = 0
-  form.value.subcategory_id = undefined
-})
+watch(
+  () => form.value.type,
+  () => {
+    // Limpar categoria e subcategoria ao trocar tipo
+    form.value.category_id = 0;
+    form.value.subcategory_id = undefined;
+  },
+);
 
 onMounted(async () => {
   // Carregar opções de filtro se não estiverem carregadas
   if (filterOptions.value.categorias.length === 0) {
     try {
-      await store.loadFilterOptions()
+      await store.loadFilterOptions();
     } catch (error) {
-      console.error('Erro ao carregar opções de filtro:', error)
+      console.error("Erro ao carregar opções de filtro:", error);
     }
   }
-})
+});
 </script>
 
 <style scoped>
@@ -454,14 +478,13 @@ onMounted(async () => {
   .transaction-modal {
     @apply mx-2 p-4;
   }
-  
+
   .toggle-container {
     @apply flex-col;
   }
-  
+
   .toggle-button {
     @apply w-full;
   }
 }
 </style>
-

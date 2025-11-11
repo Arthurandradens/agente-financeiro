@@ -1,99 +1,98 @@
-import { drizzle } from 'drizzle-orm/node-postgres'
-import { Pool } from 'pg'
-import { banks } from '../src/schema/pg/banks'
-import { config } from '../src/config/env'
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+import { banks } from "../src/schema/pg/banks";
+import { config } from "../src/config/env";
 
 // Configurar conexão com banco PostgreSQL
 const pool = new Pool({
-  connectionString: config.DATABASE_URL
-})
-const db = drizzle(pool)
+  connectionString: config.DATABASE_URL,
+});
+const db = drizzle(pool);
 
 const banksData = [
   {
     id: 1,
-    code: 'CEF',
-    name: 'Caixa Econômica Federal'
+    code: "CEF",
+    name: "Caixa Econômica Federal",
   },
   {
     id: 2,
-    code: 'BBDC4',
-    name: 'Bradesco'
+    code: "BBDC4",
+    name: "Bradesco",
   },
   {
     id: 3,
-    code: 'ITUB4',
-    name: 'Itaú Unibanco'
+    code: "ITUB4",
+    name: "Itaú Unibanco",
   },
   {
     id: 4,
-    code: 'BBAS3',
-    name: 'Banco do Brasil'
+    code: "BBAS3",
+    name: "Banco do Brasil",
   },
   {
     id: 5,
-    code: 'SANB11',
-    name: 'Santander'
+    code: "SANB11",
+    name: "Santander",
   },
   {
     id: 6,
-    code: 'NU',
-    name: 'Nubank'
+    code: "NU",
+    name: "Nubank",
   },
   {
     id: 7,
-    code: 'BIDI11',
-    name: 'Banco Inter'
+    code: "BIDI11",
+    name: "Banco Inter",
   },
   {
     id: 8,
-    code: 'C6',
-    name: 'C6 Bank'
+    code: "C6",
+    name: "C6 Bank",
   },
   {
     id: 9,
-    code: 'PAGS',
-    name: 'PagBank'
+    code: "PAGS",
+    name: "PagBank",
   },
   {
     id: 10,
-    code: 'MELI',
-    name: 'Mercado Pago'
+    code: "MELI",
+    name: "Mercado Pago",
   },
   {
     id: 11,
-    code: 'PICPAY',
-    name: 'PicPay'
-  }
-]
+    code: "PICPAY",
+    name: "PicPay",
+  },
+];
 
 async function seedBanks() {
-  console.log('🏦 Iniciando seed de bancos...')
-  
+  console.log("🏦 Iniciando seed de bancos...");
+
   try {
     // Inserir bancos (INSERT OR IGNORE para evitar duplicatas)
     for (const bank of banksData) {
-      await db.insert(banks).values(bank).onConflictDoNothing()
+      await db.insert(banks).values(bank).onConflictDoNothing();
     }
-    
-    console.log(`✅ Seed concluído! ${banksData.length} bancos inseridos.`)
-    
+
+    console.log(`✅ Seed concluído! ${banksData.length} bancos inseridos.`);
+
     // Verificar quantos foram realmente inseridos
-    const count = await db.select().from(banks)
-    console.log(`📊 Total de bancos na tabela: ${count.length}`)
-    
+    const count = await db.select().from(banks);
+    console.log(`📊 Total de bancos na tabela: ${count.length}`);
+
     // Listar bancos inseridos
-    console.log('📋 Bancos disponíveis:')
-    count.forEach(bank => {
-      console.log(`  ${bank.id}: ${bank.name} (${bank.code})`)
-    })
-    
+    console.log("📋 Bancos disponíveis:");
+    count.forEach((bank) => {
+      console.log(`  ${bank.id}: ${bank.name} (${bank.code})`);
+    });
   } catch (error) {
-    console.error('❌ Erro no seed:', error)
-    process.exit(1)
+    console.error("❌ Erro no seed:", error);
+    process.exit(1);
   } finally {
-    await pool.end()
+    await pool.end();
   }
 }
 
-seedBanks()
+seedBanks();

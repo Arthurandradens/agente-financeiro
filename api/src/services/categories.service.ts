@@ -1,45 +1,48 @@
-import { eq, and, sql } from 'drizzle-orm'
-import { categories } from '../schema/index'
-import type { FastifyInstance } from 'fastify'
+import { eq, and, sql } from "drizzle-orm";
+import { categories } from "../schema/index";
+import type { FastifyInstance } from "fastify";
 
 export interface CategoryListResult {
-  items: any[]
-  total: number
+  items: any[];
+  total: number;
 }
 
 export interface CategoryHierarchy {
-  id: number
-  name: string
-  slug: string
-  kind: string
-  parentId?: number
-  children?: CategoryHierarchy[]
+  id: number;
+  name: string;
+  slug: string;
+  kind: string;
+  parentId?: number;
+  children?: CategoryHierarchy[];
 }
 
 export class CategoriesService {
   constructor(private fastify: FastifyInstance) {}
 
   async list(): Promise<CategoryListResult> {
-    const db = this.fastify.db
+    const db = this.fastify.db;
 
     // Buscar todas as categorias
-    const items = await db.select().from(categories).orderBy(categories.name)
+    const items = await db.select().from(categories).orderBy(categories.name);
 
     return {
       items,
-      total: items.length
-    }
+      total: items.length,
+    };
   }
 
   async getHierarchy(): Promise<CategoryHierarchy[]> {
-    const db = this.fastify.db
+    const db = this.fastify.db;
 
     // Buscar todas as categorias
-    const allCategories = await db.select().from(categories).orderBy(categories.name)
+    const allCategories = await db
+      .select()
+      .from(categories)
+      .orderBy(categories.name);
 
     // Criar mapa para facilitar lookup
-    const categoryMap = new Map<number, CategoryHierarchy>()
-    const roots: CategoryHierarchy[] = []
+    const categoryMap = new Map<number, CategoryHierarchy>();
+    const roots: CategoryHierarchy[] = [];
 
     // Primeiro, criar todos os nós
     for (const cat of allCategories) {
@@ -49,79 +52,86 @@ export class CategoriesService {
         slug: cat.slug,
         kind: cat.kind,
         parentId: cat.parentId || undefined,
-        children: []
-      })
+        children: [],
+      });
     }
 
     // Depois, organizar hierarquia
     for (const cat of allCategories) {
-      const category = categoryMap.get(cat.id)!
-      
+      const category = categoryMap.get(cat.id)!;
+
       if (cat.parentId) {
         // É subcategoria
-        const parent = categoryMap.get(cat.parentId)
+        const parent = categoryMap.get(cat.parentId);
         if (parent) {
-          parent.children = parent.children || []
-          parent.children.push(category)
+          parent.children = parent.children || [];
+          parent.children.push(category);
         }
       } else {
         // É categoria pai
-        roots.push(category)
+        roots.push(category);
       }
     }
 
-    return roots
+    return roots;
   }
 
   async getById(id: number) {
-    const db = this.fastify.db
-    const result = await db.select().from(categories).where(eq(categories.id, id)).limit(1)
-    return result.length > 0 ? result[0] : null
+    const db = this.fastify.db;
+    const result = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.id, id))
+      .limit(1);
+    return result.length > 0 ? result[0] : null;
   }
 
   async create(data: {
-    name: string
-    slug: string
-    kind: 'spend' | 'income' | 'transfer' | 'invest' | 'fee'
-    parentId?: number
+    name: string;
+    slug: string;
+    kind: "spend" | "income" | "transfer" | "invest" | "fee";
+    parentId?: number;
   }) {
-    const db = this.fastify.db
+    const db = this.fastify.db;
 
     // Verificar se slug já existe
     const existing = await db
       .select()
       .from(categories)
       .where(eq(categories.slug, data.slug))
-      .limit(1)
+      .limit(1);
 
     if (existing.length > 0) {
-      throw new Error('Slug já existe')
+      throw new Error("Slug já existe");
     }
 
     // Verificar se parentId existe (se fornecido)
     if (data.parentId) {
-      const parent = await this.getById(data.parentId)
+      const parent = await this.getById(data.parentId);
       if (!parent) {
-        throw new Error('Categoria pai não encontrada')
+        throw new Error("Categoria pai não encontrada");
       }
     }
 
-    const [inserted] = await db.insert(categories).values(data).returning()
-    return inserted
+    const [inserted] = await db.insert(categories).values(data).returning();
+    return inserted;
   }
 
-  async update(id: number, data: Partial<{
-    name: string
-    slug: string
-    kind: 'spend' | 'income' | 'transfer' | 'invest' | 'fee'
-    parentId: number
-  }>) {
-    const db = this.fastify.db
+  async update(
+    id: number,
+    data: Partial<{
+      name: string;
+      slug: string;
+      kind: "spend" | "income" | "transfer" | "invest" | "fee";
+      parentId: number;
+    }>,
+  ) {
+    const db = this.fastify.db;
 
     // Verificar se categoria existe
-    const existing = await this.getById(id)
+    const existing = await this.getById(id);
     if (!existing) {
-      throw new Error('Categoria não encontrada')
+      throw new Error("Categoria não encontrada");
     }
 
     // Verificar se slug já existe (se mudou)
@@ -130,19 +140,19 @@ export class CategoriesService {
         .select()
         .from(categories)
         .where(eq(categories.slug, data.slug))
-        .limit(1)
+        .limit(1);
 
       if (slugExists.length > 0) {
-        throw new Error('Slug já existe')
+        throw new Error("Slug já existe");
       }
     }
 
     // Verificar se parentId existe (se fornecido)
     if (data.parentId !== undefined) {
       if (data.parentId !== null) {
-        const parent = await this.getById(data.parentId)
+        const parent = await this.getById(data.parentId);
         if (!parent) {
-          throw new Error('Categoria pai não encontrada')
+          throw new Error("Categoria pai não encontrada");
         }
       }
     }
@@ -151,18 +161,18 @@ export class CategoriesService {
       .update(categories)
       .set(data)
       .where(eq(categories.id, id))
-      .returning()
+      .returning();
 
-    return updated
+    return updated;
   }
 
   async delete(id: number) {
-    const db = this.fastify.db
+    const db = this.fastify.db;
 
     // Verificar se categoria existe
-    const existing = await this.getById(id)
+    const existing = await this.getById(id);
     if (!existing) {
-      throw new Error('Categoria não encontrada')
+      throw new Error("Categoria não encontrada");
     }
 
     // Verificar se tem subcategorias
@@ -170,10 +180,10 @@ export class CategoriesService {
       .select()
       .from(categories)
       .where(eq(categories.parentId, id))
-      .limit(1)
+      .limit(1);
 
     if (children.length > 0) {
-      throw new Error('Não é possível excluir categoria que tem subcategorias')
+      throw new Error("Não é possível excluir categoria que tem subcategorias");
     }
 
     // Verificar se tem transações associadas
@@ -181,14 +191,15 @@ export class CategoriesService {
       SELECT COUNT(*) as count 
       FROM transactions 
       WHERE category_id = ${id} OR subcategory_id = ${id}
-    `)
+    `);
 
     if (Number(transactions.rows[0].count) > 0) {
-      throw new Error('Não é possível excluir categoria que tem transações associadas')
+      throw new Error(
+        "Não é possível excluir categoria que tem transações associadas",
+      );
     }
 
-    await db.delete(categories).where(eq(categories.id, id))
-    return true
+    await db.delete(categories).where(eq(categories.id, id));
+    return true;
   }
 }
-
