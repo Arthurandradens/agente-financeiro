@@ -12,6 +12,16 @@
           </div>
           
           <div class="flex items-center space-x-4">
+            <!-- Upload button -->
+            <Button
+              icon="pi pi-upload"
+              severity="primary"
+              size="small"
+              @click="showUpload = true"
+              v-tooltip.top="'Carregar extrato (CSV ou Excel)'"
+              class="mr-2"
+            />
+            
             <!-- Dark mode toggle -->
             <Button
               :icon="isDark ? 'pi pi-sun' : 'pi pi-moon'"
@@ -150,7 +160,7 @@
       <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            Carregar Arquivo Excel
+            Carregar Extrato
           </h3>
           <Button
             icon="pi pi-times"
