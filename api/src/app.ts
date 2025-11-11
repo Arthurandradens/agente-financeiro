@@ -1,5 +1,6 @@
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
+import multipart from '@fastify/multipart'
 import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
 import { config } from './config/env'
@@ -26,6 +27,13 @@ export async function createApp() {
   await fastify.register(cors, {
     origin: config.FRONTEND_ORIGIN,
     credentials: true
+  })
+
+  // Multipart (para upload de arquivos)
+  await fastify.register(multipart, {
+    limits: {
+      fileSize: 10 * 1024 * 1024 // 10MB
+    }
   })
 
   // Swagger (opcional)

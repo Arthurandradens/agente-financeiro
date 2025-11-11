@@ -228,6 +228,63 @@ class ApiClient {
     })
   }
 
+  // Upload CSV para classificação automática
+  async uploadCSV(file: File, onProgress?: (progress: number) => void): Promise<{
+    statementId: number
+    inserted: number
+    duplicates: number
+    totalClassified: number
+  }> {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const url = `${this.baseUrl}/statements/upload-csv`
+    
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
+
+      // Progress tracking
+      if (onProgress) {
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const percentComplete = (e.loaded / e.total) * 100
+            onProgress(percentComplete)
+          }
+        })
+      }
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const response = JSON.parse(xhr.responseText)
+            resolve(response)
+          } catch (e) {
+            reject(new Error('Resposta inválida do servidor'))
+          }
+        } else {
+          try {
+            const error = JSON.parse(xhr.responseText)
+            reject(new Error(error.message || `HTTP ${xhr.status}`))
+          } catch (e) {
+            reject(new Error(`HTTP ${xhr.status}`))
+          }
+        }
+      })
+
+      xhr.addEventListener('error', () => {
+        reject(new Error('Erro de rede ao fazer upload'))
+      })
+
+      xhr.addEventListener('abort', () => {
+        reject(new Error('Upload cancelado'))
+      })
+
+      xhr.open('POST', url)
+      xhr.setRequestHeader('x-api-key', this.apiKey)
+      xhr.send(formData)
+    })
+  }
+
 
   async getCategoriesHierarchy() {
     return this.request('/categories/hierarchy')
@@ -280,6 +337,7 @@ export const api = {
   getSeries: (filters?: any) => apiClient.getSeries(filters),
   getTopSubcategories: (filters?: any) => apiClient.getTopSubcategories(filters),
   ingestStatement: (data: any) => apiClient.ingestStatement(data),
+  uploadCSV: (file: File, onProgress?: (progress: number) => void) => apiClient.uploadCSV(file, onProgress),
   getCategories: () => apiClient.getCategories(),
   getCategoriesHierarchy: () => apiClient.getCategoriesHierarchy(),
   getCategory: (id: number) => apiClient.getCategory(id),

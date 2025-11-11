@@ -16,6 +16,7 @@ import Card from 'primevue/card'
 import Toast from 'primevue/toast'
 import ToastService from 'primevue/toastservice'
 import ProgressSpinner from 'primevue/progressspinner'
+import ProgressBar from 'primevue/progressbar'
 import Badge from 'primevue/badge'
 import Tag from 'primevue/tag'
 import ConfirmDialog from 'primevue/confirmdialog'
@@ -60,6 +61,7 @@ app.component('Column', Column)
 app.component('Card', Card)
 app.component('Toast', Toast)
 app.component('ProgressSpinner', ProgressSpinner)
+app.component('ProgressBar', ProgressBar)
 app.component('Badge', Badge)
 app.component('Tag', Tag)
 app.component('ConfirmDialog', ConfirmDialog)
